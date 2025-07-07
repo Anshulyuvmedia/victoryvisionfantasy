@@ -24,7 +24,7 @@ const TabItem = ({ route, index, isFocused, options, navigation }) => {
                 useNativeDriver: true,
             }),
             Animated.spring(iconTranslateY, {
-                toValue: isFocused ? -30 : 0,
+                toValue: isFocused ? -35 : 0,
                 friction: 6,
                 tension: 50,
                 useNativeDriver: true,
@@ -150,14 +150,16 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             >
                 <View style={styles.indicatorSolid} />
             </Animated.View>
-            <Animated.View
+            <Animated.Image
+                source={icons.ellipse}
                 style={[
-                    styles.semiCircle,
+                    styles.ellipse,
                     {
                         transform: [{ translateX }],
-                        left: tabWidth / 2 - 30, // Center semicircle
+                        left: tabWidth / 2 - 50, // Center ellipse (adjust based on image width)
                     },
                 ]}
+                resizeMode="contain"
             />
             {state.routes.map((route, index) => (
                 <TabItem
@@ -177,10 +179,10 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
 const styles = StyleSheet.create({
     tabBar: {
         flexDirection: 'row',
-        backgroundColor: '#f0f1f2',
-        height: 60,
-        borderTopLeftRadius: 20, // Rounded top left
-        borderTopRightRadius: 20, // Rounded top right
+        backgroundColor: '#fafafa',
+        height: 70,
+        borderTopLeftRadius: 10, // Rounded top left
+        borderTopRightRadius: 10, // Rounded top right
         shadowColor: 'rgba(18, 22, 33, 0.1)',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 1,
@@ -192,6 +194,8 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
+        zIndex: 99,
+
     },
     indicator: {
         position: 'absolute',
@@ -199,6 +203,7 @@ const styles = StyleSheet.create({
         height: 44,
         borderRadius: 100,
         top: -23,
+        zIndex: 9,
     },
     indicatorSolid: {
         width: '100%',
@@ -211,14 +216,12 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 5,
     },
-    semiCircle: {
+    ellipse: {
         position: 'absolute',
-        width: 60,
-        height: 30, // Half of width for semicircle effect
-        backgroundColor: '#fafafa',
-        borderRadius: 30, // Full radius to create semicircle
-        top: 68, // Position at the bottom of tab bar
-        transform: [{ scaleY: 0.5 }], // Flatten to semicircle
+        zIndex: 0,
+        width: 100, // Match the width from your provided style
+        height: 28, // Match the height from your provided style
+        top: 0, // Position at the bottom of tab bar
     },
     label: {
         position: 'absolute',
