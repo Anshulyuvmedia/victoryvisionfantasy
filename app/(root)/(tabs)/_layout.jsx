@@ -1,7 +1,8 @@
 import { Tabs } from 'expo-router';
 import React, { useRef, useEffect } from 'react';
 import { View, Text, Animated, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import icons from '@/constants/icons';
 
 // Get screen width
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -23,7 +24,7 @@ const TabItem = ({ route, index, isFocused, options, navigation }) => {
                 useNativeDriver: true,
             }),
             Animated.spring(iconTranslateY, {
-                toValue: isFocused ? -24 : 0,
+                toValue: isFocused ? -30 : 0,
                 friction: 6,
                 tension: 50,
                 useNativeDriver: true,
@@ -73,6 +74,14 @@ const TabItem = ({ route, index, isFocused, options, navigation }) => {
 
     const iconColor = isFocused ? '#fff' : '#888888';
 
+    const customIcons = {
+        index: icons.cricketwhite,
+        points: icons.pointswhite,
+        aiteams: icons.aiteamwhite,
+        reports: icons.reportwhite,
+        kabaddi: icons.kabaddiwhite,
+    };
+
     return (
         <TouchableOpacity onPress={onPress} style={styles.tabItem} activeOpacity={1}>
             <Animated.View
@@ -80,11 +89,24 @@ const TabItem = ({ route, index, isFocused, options, navigation }) => {
                     transform: [{ scale: iconScale }, { translateY: iconTranslateY }],
                 }}
             >
-                <FontAwesome
-                    name={getIconName(route.name, isFocused)}
-                    size={24}
-                    color={iconColor}
-                />
+                <View
+                    style={{
+                        width: 28,
+                        height: 28,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    }}
+                >
+                    <Animated.Image
+                        source={customIcons[route.name]}
+                        style={{
+                            width: 28,
+                            height: 28,
+                            tintColor: iconColor,
+                        }}
+                        resizeMode="contain"
+                    />
+                </View>
             </Animated.View>
             <Animated.Text
                 style={[
@@ -128,6 +150,15 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
             >
                 <View style={styles.indicatorSolid} />
             </Animated.View>
+            <Animated.View
+                style={[
+                    styles.semiCircle,
+                    {
+                        transform: [{ translateX }],
+                        left: tabWidth / 2 - 30, // Center semicircle
+                    },
+                ]}
+            />
             {state.routes.map((route, index) => (
                 <TabItem
                     key={route.key}
@@ -147,8 +178,9 @@ const styles = StyleSheet.create({
     tabBar: {
         flexDirection: 'row',
         backgroundColor: '#f0f1f2',
-        height: 68,
-        borderRadius: 0,
+        height: 60,
+        borderTopLeftRadius: 20, // Rounded top left
+        borderTopRightRadius: 20, // Rounded top right
         shadowColor: 'rgba(18, 22, 33, 0.1)',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 1,
@@ -166,7 +198,7 @@ const styles = StyleSheet.create({
         width: 44,
         height: 44,
         borderRadius: 100,
-        top: -12,
+        top: -23,
     },
     indicatorSolid: {
         width: '100%',
@@ -179,10 +211,19 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 5,
     },
+    semiCircle: {
+        position: 'absolute',
+        width: 60,
+        height: 30, // Half of width for semicircle effect
+        backgroundColor: '#fafafa',
+        borderRadius: 30, // Full radius to create semicircle
+        top: 68, // Position at the bottom of tab bar
+        transform: [{ scaleY: 0.5 }], // Flatten to semicircle
+    },
     label: {
         position: 'absolute',
         bottom: 0,
-        fontSize: 12,
+        fontSize: 14,
         fontWeight: '500',
         color: '#132569',
         textAlign: 'center',
