@@ -1,15 +1,17 @@
 import { StyleSheet, Text, View, ImageBackground, SafeAreaView } from 'react-native';
 import React, { useState, useEffect } from 'react';
+import Header from '@/components/Header';
 
 const Kabaddi = () => {
 
     return (
-        <SafeAreaView style={styles.container}>
+        <View style={styles.container}>
             <ImageBackground
                 source={{ uri: 'https://i.pinimg.com/736x/15/6c/ce/156cce6a18eb4c3780f19999b8ade3b2.jpg' }}
                 style={styles.background}
                 resizeMode="cover"
             >
+                <Header />
                 <View style={styles.overlay}>
                     {/* <Text style={styles.title}>Kabaddi Fantasy</Text> */}
                     <Text style={styles.title}>Coming Soon!</Text>
@@ -18,7 +20,7 @@ const Kabaddi = () => {
                     </Text>
                 </View>
             </ImageBackground>
-        </SafeAreaView>
+        </View>
     );
 };
 
@@ -31,7 +33,7 @@ const styles = StyleSheet.create({
     background: {
         flex: 1,
         justifyContent: 'center',
-        alignItems: 'center',
+        // alignItems: 'center',
     },
     overlay: {
         flex: 1,
