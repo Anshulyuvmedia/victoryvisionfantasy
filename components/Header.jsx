@@ -37,11 +37,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#1E2A5E', // Dark blue from the image
+        backgroundColor: '#111F54', // Dark blue from the image
         height: verticalScale(60), // Scaled height
-        borderBottomLeftRadius: moderateScale(20), // Scaled radius
+        borderBottomLeftRadius: moderateScale(20), // Scaled radius/
         borderBottomRightRadius: moderateScale(20), // Scaled radius
-        paddingHorizontal: moderateScale(15), // Scaled padding
+        paddingHorizontal: moderateScale(10), // Scaled padding
     },
     iconContainer: {
         flexDirection: 'row',
@@ -60,16 +60,5 @@ const styles = StyleSheet.create({
         width: moderateScale(140), // Scaled width
         height: moderateScale(150), // Scaled height
         // tintColor: '#FFD700', // Gold color for the logo (approximate)
-    },
-    title: {
-        fontSize: moderateScale(16), // Scaled font size
-        fontWeight: 'bold',
-        color: '#FFD700', // Gold color for "VICTORY VISION"
-        textAlign: 'center',
-    },
-    subtitle: {
-        fontSize: moderateScale(10), // Scaled font size
-        color: '#fff', // White color for "FANTASY CRICKET"
-        textAlign: 'center',
     },
 });

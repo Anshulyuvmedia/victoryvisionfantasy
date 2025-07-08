@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     },
     matchNo: {
         color: '#FFFFFF',
-        fontSize: scale(12), // Slightly smaller to match the second image
+        fontSize: scale(10), // Slightly smaller to match the second image
         fontWeight: '400',
     },
     time: {
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     },
     countdown: {
         color: '#FFFFFF',
-        fontSize: scale(12),
+        fontSize: scale(10),
         fontWeight: '400',
     },
     teams: {
@@ -127,6 +127,6 @@ const styles = StyleSheet.create({
     },
     weather: {
         color: '#D1D5DB',
-        fontSize: scale(13),
+        fontSize: scale(12),
     },
 });

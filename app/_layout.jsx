@@ -68,7 +68,7 @@ function RootLayoutNav() {
             <View
                 style={[
                     styles.statusBar,
-                    { height: insets.top || 44, backgroundColor: '#1E2A5E' },
+                    { height: insets.top || 44, backgroundColor: '#111F54' },
                 ]}
             >
                 <StatusBar style="light" />
@@ -90,6 +90,6 @@ const styles = StyleSheet.create({
         top: 0,
         left: 0,
         right: 0,
-        backgroundColor: '#1E2A5E',
+        backgroundColor: '#111F54',
     },
 });
