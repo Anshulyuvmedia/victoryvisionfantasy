@@ -2,7 +2,6 @@ import {
     StyleSheet,
     View,
     useWindowDimensions,
-    Platform,
     Text,
     Animated,
 } from 'react-native';
@@ -16,29 +15,34 @@ import StatsTab from './StatsTab';
 import ExpertTab from './ExpertTab';
 
 const renderScene = SceneMap({
-    predictions: PredictionsTab,
-    aiTeams: AiTeamsTab,
-    lineupsTab: LineupsTab,
-    statsTab: StatsTab,
-    expertTab: ExpertTab,
+    predictions: ({ route }) => <PredictionsTab onContentHeightChange={route.onContentHeightChange} />,
+    aiTeams: ({ route }) => <AiTeamsTab onContentHeightChange={route.onContentHeightChange} />,
+    lineupsTab: ({ route }) => <LineupsTab onContentHeightChange={route.onContentHeightChange} />,
+    statsTab: ({ route }) => <StatsTab onContentHeightChange={route.onContentHeightChange} />,
+    expertTab: ({ route }) => <ExpertTab onContentHeightChange={route.onContentHeightChange} />,
 });
-
-const routes = [
-    { key: 'predictions', title: 'Predictions' },
-    { key: 'aiTeams', title: 'AI Teams' },
-    { key: 'lineupsTab', title: 'Lineups' },
-    { key: 'statsTab', title: 'Stats' },
-    { key: 'expertTab', title: 'Expert' },
-];
 
 const HomeTabNav = () => {
     const layout = useWindowDimensions();
     const [index, setIndex] = useState(0);
-    const [initialLayout, setInitialLayout] = useState({ width: layout.width - 20 }); // Account for padding
+    const [initialLayout, setInitialLayout] = useState({ width: layout.width - 20 });
+    const [contentHeight, setContentHeight] = useState(0); // Track max content height
 
     useEffect(() => {
-        setInitialLayout({ width: layout.width - 20 }); // Adjust for paddingHorizontal: 10
+        setInitialLayout({ width: layout.width - 20 });
     }, [layout.width]);
+
+    const handleContentHeightChange = (height) => {
+        setContentHeight((prevHeight) => Math.max(prevHeight, height)); // Update to max height
+    };
+
+    const routes = [
+        { key: 'predictions', title: 'Predictions', onContentHeightChange: handleContentHeightChange },
+        { key: 'aiTeams', title: 'AI Teams', onContentHeightChange: handleContentHeightChange },
+        { key: 'lineupsTab', title: 'Lineups', onContentHeightChange: handleContentHeightChange },
+        { key: 'statsTab', title: 'Stats', onContentHeightChange: handleContentHeightChange },
+        { key: 'expertTab', title: 'Expert', onContentHeightChange: handleContentHeightChange },
+    ];
 
     const renderTabBar = (props) => {
         const { navigationState, position } = props;
@@ -111,7 +115,7 @@ const HomeTabNav = () => {
     };
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { minHeight: contentHeight || 300 }]}>
             {initialLayout.width > 0 && (
                 <TabView
                     navigationState={{ index, routes }}
@@ -132,16 +136,16 @@ export default HomeTabNav;
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        marginTop: 15,
-        paddingHorizontal: 10,
+        marginTop: 10,
+        borderRadius: 24,
+        flexGrow: 1, // Allow container to grow with content
     },
     tabView: {
-        flex: 1,
+        borderRadius: 24,
+        flexGrow: 1, // Allow TabView to grow with content
     },
     sceneContainer: {
-        flex: 1, // Ensure the scene container takes full height
-        // paddingBottom: 70, // Reserve space for bottom tabs
+        flexGrow: 1, // Allow scenes to grow based on content
     },
     tabBar: {
         backgroundColor: '#5f83f1',
@@ -149,11 +153,10 @@ const styles = StyleSheet.create({
         position: 'relative',
     },
     tabContainer: {
-        // paddingHorizontal: 10,
         paddingVertical: 5,
     },
     activeTab: {
-        backgroundColor: '#f2f6ff', // Light background for active tab
+        backgroundColor: '#f2f6ff',
         paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 15,
@@ -167,6 +170,7 @@ const styles = StyleSheet.create({
     tabIndicator: {
         height: 0,
         backgroundColor: 'transparent',
+        borderRadius: 24,
     },
     pillIndicator: {
         position: 'absolute',
@@ -179,11 +183,12 @@ const styles = StyleSheet.create({
         borderRadius: 20,
     },
     tabLabel: {
-        color: '#000', // Ensure black text
+        color: '#fff',
         fontSize: 14,
         textAlign: 'center',
     },
     activeTabLabel: {
         fontWeight: 'bold',
+        color: '#000',
     },
 });

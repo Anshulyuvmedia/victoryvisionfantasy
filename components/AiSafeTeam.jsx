@@ -1,8 +1,9 @@
 import { StyleSheet, Text, View, FlatList, Image, TouchableOpacity } from 'react-native';
 import React, { useState } from 'react';
+import Entypo from '@expo/vector-icons/Entypo';
 import images from '@/constants/images';
 
-const LineupsTab = () => {
+const AiSafeTeam = () => {
     const [activeRole, setActiveRole] = useState('ALL'); // Default to show all players
 
     const teamData = [
@@ -54,14 +55,51 @@ const LineupsTab = () => {
         <View style={styles.container}>
             <View style={styles.header}>
                 <View style={styles.titleBox}>
-                    <Text style={styles.title}>Team Lineups</Text>
+                    <Entypo name="shield" size={24} color="green" />
+                    <Text style={styles.title}>Safe Team</Text>
                 </View>
-                <Text>IPL 2025</Text>
+                <View style={styles.winRateBox}>
+                    <Text style={styles.winBox}>85% Win Rate</Text>
+                    <Text style={styles.subtitle}>Low Risk High Consistency</Text>
+                </View>
+            </View>
+            <View style={styles.stats}>
+                <TouchableOpacity
+                    style={[styles.tabBox, activeRole === 'WK' ? styles.activeTabBox : null]}
+                    onPress={() => handleTabPress('WK')}
+                >
+                    <Text style={[styles.tabTitle, activeRole === 'WK' ? styles.activetabTitle : null]}>WK (1)</Text>
+                    <Text style={styles.tabSubTitle}>8.5cr</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.tabBox, activeRole === 'BAT' ? styles.activeTabBox : null]}
+                    onPress={() => handleTabPress('BAT')}
+                >
+                    <Text style={[styles.tabTitle, activeRole === 'BAT' ? styles.activetabTitle : null]}>BAT (4)</Text>
+                    <Text style={styles.tabSubTitle}>32cr</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.tabBox, activeRole === 'AR' ? styles.activeTabBox : null]}
+                    onPress={() => handleTabPress('AR')}
+                >
+                    <Text style={[styles.tabTitle, activeRole === 'AR' ? styles.activetabTitle : null]}>AR (2)</Text>
+                    <Text style={styles.tabSubTitle}>18cr</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.tabBox, activeRole === 'BOW' ? styles.activeTabBox : null]}
+                    onPress={() => handleTabPress('BOW')}
+                >
+                    <Text style={[styles.tabTitle, activeRole === 'BOW' ? styles.activetabTitle : null]}>BOW (4)</Text>
+                    <Text style={styles.blankText}> </Text>
+                    <Text style={styles.tabSubTitle}>41.5cr</Text>
+                </TouchableOpacity>
             </View>
             <View style={styles.boxTitle}>
-                <Text style={styles.boxTitleText}>
-                    Playing XI 
-                </Text>
+                <TouchableOpacity onPress={() => setActiveRole('ALL')}>
+                    <Text style={styles.boxTitleText}>
+                        Playing XI {activeRole !== 'ALL' ? `(${activeRole})` : ''}
+                    </Text>
+                </TouchableOpacity>
             </View>
             <FlatList
                 data={filteredData}
@@ -73,7 +111,7 @@ const LineupsTab = () => {
     );
 };
 
-export default LineupsTab;
+export default AiSafeTeam;
 
 const styles = StyleSheet.create({
     container: {
