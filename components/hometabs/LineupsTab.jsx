@@ -1,8 +1,18 @@
 import { StyleSheet, Text, View, FlatList, Image, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import images from '@/constants/images';
 
-const LineupsTab = () => {
+const LineupsTab = ({ onContentHeightChange }) => {
+    const handleLayout = useCallback(
+                (event) => {
+                    if (onContentHeightChange) {
+                        const { height } = event.nativeEvent.layout;
+                        onContentHeightChange(height); // Pass the measured height to the parent
+                    }
+                },
+                [onContentHeightChange]
+            );
+
     const [activeRole, setActiveRole] = useState('ALL'); // Default to show all players
 
     const teamData = [
@@ -51,7 +61,7 @@ const LineupsTab = () => {
     );
 
     return (
-        <View style={styles.container}>
+        <View style={styles.container} onLayout={handleLayout}>
             <View style={styles.header}>
                 <View style={styles.titleBox}>
                     <Text style={styles.title}>Team Lineups</Text>

@@ -59,6 +59,6 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
     section: {
-        marginBottom: 15,
+        // marginBottom: 5,
     },
 });

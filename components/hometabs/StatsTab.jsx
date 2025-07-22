@@ -1,11 +1,21 @@
 import { StyleSheet, Text, View } from 'react-native'
-import React from 'react';
+import React, { useCallback } from 'react';
+
 import LinearGradient from 'react-native-linear-gradient';
 import { Entypo } from '@expo/vector-icons';
 
-const StatsTab = () => {
+const StatsTab = ({ onContentHeightChange }) => {
+    const handleLayout = useCallback(
+        (event) => {
+            if (onContentHeightChange) {
+                const { height } = event.nativeEvent.layout;
+                onContentHeightChange(height); // Pass the measured height to the parent
+            }
+        },
+        [onContentHeightChange]
+    );
     return (
-        <View style={styles.container}>
+        <View style={styles.container} onLayout={handleLayout}>
             <View style={styles.header}>
                 <View style={styles.titleBox}>
                     <Text style={styles.title}>Match Stats</Text>

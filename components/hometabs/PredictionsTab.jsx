@@ -1,10 +1,19 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
-const PredictionsTab = () => {
+const PredictionsTab = ({ onContentHeightChange }) => {
+    const handleLayout = useCallback(
+            (event) => {
+                if (onContentHeightChange) {
+                    const { height } = event.nativeEvent.layout;
+                    onContentHeightChange(height); // Pass the measured height to the parent
+                }
+            },
+            [onContentHeightChange]
+        );
     return (
-        <View style={styles.container}>
+        <View style={styles.container} onLayout={handleLayout}>
             <Text style={styles.header}>Match Predictions</Text>
             <View style={styles.matchsection}>
                 <LinearGradient
