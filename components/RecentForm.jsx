@@ -2,7 +2,17 @@ import { StyleSheet, Text, View } from 'react-native';
 import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 
-const RecentForm = () => {
+const RecentForm = ({ recentForm }) => {
+    // console.log('Inside Recent Form:', recentForm);
+    const recentFormArray = recentForm?.recentForm ?? []; // Safe fallback
+    const getInitials = (name) => {
+        if (!name) return '';
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .toUpperCase();
+    }
     return (
         <View style={styles.outerContainer}>
             <LinearGradient
@@ -14,46 +24,21 @@ const RecentForm = () => {
                 <View style={styles.container}>
                     <View style={styles.content}>
                         <Text style={styles.title}>Recent Form</Text>
-                        <View style={styles.teamContainer}>
-                            <Text style={styles.team}>MI</Text>
-                            <View style={styles.form}>
-                                <View style={styles.win}>
-                                    <Text style={styles.indicatorText}>W</Text>
-                                </View>
-                                <View style={styles.loss}>
-                                    <Text style={styles.indicatorText}>L</Text>
-                                </View>
-                                <View style={styles.win}>
-                                    <Text style={styles.indicatorText}>W</Text>
-                                </View>
-                                <View style={styles.win}>
-                                    <Text style={styles.indicatorText}>W</Text>
-                                </View>
-                                <View style={styles.loss}>
-                                    <Text style={styles.indicatorText}>L</Text>
+                        {recentFormArray.map((teamData, index) => (
+                            <View key={index} style={styles.teamContainer}>
+                                <Text style={styles.team}>{getInitials(teamData.team)}</Text>
+                                <View style={styles.form}>
+                                    {teamData.last5.map((result, i) => (
+                                        <View
+                                            key={i}
+                                            style={result === 'W' ? styles.win : styles.loss}
+                                        >
+                                            <Text style={styles.indicatorText}>{result}</Text>
+                                        </View>
+                                    ))}
                                 </View>
                             </View>
-                        </View>
-                        <View style={styles.teamContainer}>
-                            <Text style={styles.team}>CSK</Text>
-                            <View style={styles.form}>
-                                <View style={styles.win}>
-                                    <Text style={styles.indicatorText}>W</Text>
-                                </View>
-                                <View style={styles.win}>
-                                    <Text style={styles.indicatorText}>W</Text>
-                                </View>
-                                <View style={styles.loss}>
-                                    <Text style={styles.indicatorText}>L</Text>
-                                </View>
-                                <View style={styles.win}>
-                                    <Text style={styles.indicatorText}>W</Text>
-                                </View>
-                                <View style={styles.win}>
-                                    <Text style={styles.indicatorText}>W</Text>
-                                </View>
-                            </View>
-                        </View>
+                        ))}
                     </View>
                 </View>
             </LinearGradient>

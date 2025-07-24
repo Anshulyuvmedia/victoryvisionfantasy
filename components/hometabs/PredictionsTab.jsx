@@ -1,17 +1,40 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import axios from 'axios';
+
 
 const PredictionsTab = ({ onContentHeightChange }) => {
+    const [matchId, setmatchId] = useState('687e09aa6e6c3fecda45bb65');
+    const [apiData, setapiData] = useState({});
+
     const handleLayout = useCallback(
-            (event) => {
-                if (onContentHeightChange) {
-                    const { height } = event.nativeEvent.layout;
-                    onContentHeightChange(height); // Pass the measured height to the parent
+        (event) => {
+            if (onContentHeightChange) {
+                const { height } = event.nativeEvent.layout;
+                onContentHeightChange(height); // Pass the measured height to the parent
+            }
+        },
+        [onContentHeightChange]
+    );
+
+    // Fetch Match Predictions Data here by matching  Match ID..............
+    useEffect(() => {
+        const fetchMatchPredictions = async () => {
+            try {
+                const response = await axios.get(`http://192.168.1.159:3000/api/get-matchprediction`, {
+                    params: { matchId }
+                });
+                // console.log(`Response: ${JSON.stringify(response.data, null, 2)}`);
+                if (response && response.data) {
+                    setapiData(response.data.data);
                 }
-            },
-            [onContentHeightChange]
-        );
+            } catch (error) {
+                console.error('Error fetching Match Predictions data:', error);
+            }
+        };
+        fetchMatchPredictions();
+    }, []);
     return (
         <View style={styles.container} onLayout={handleLayout}>
             <Text style={styles.header}>Match Predictions</Text>
@@ -24,8 +47,8 @@ const PredictionsTab = ({ onContentHeightChange }) => {
                 >
                     <TouchableOpacity style={styles.card}>
                         <Text>Toss Winner</Text>
-                        <Text style={styles.highlighttext}>Mumbai Indians</Text>
-                        <Text>65% Probability</Text>
+                        <Text style={styles.highlighttext}>{apiData?.tossWinner}</Text>
+                        <Text>{apiData?.tossProbability}% Probability</Text>
                     </TouchableOpacity>
                 </LinearGradient>
                 <LinearGradient
@@ -36,35 +59,38 @@ const PredictionsTab = ({ onContentHeightChange }) => {
                 >
                     <TouchableOpacity style={styles.cardOrange}>
                         <Text>First Innings Score</Text>
-                        <Text style={styles.highlighttextorange}>185-190</Text>
+                        <Text style={styles.highlighttextorange}>{apiData?.predictedScore}</Text>
                         <Text>Predicted Range</Text>
                     </TouchableOpacity>
                 </LinearGradient>
             </View>
 
-            <Text style={styles.subheader}>Top Batsman Predictions</Text>
-            <View style={styles.section}>
-                <View style={styles.cardGray}>
-                    <Text>Top Batsman Predictions</Text>
-                    <Text style={styles.highlight}>45+ Runs</Text>
-                </View>
-                <View style={styles.cardGray}>
-                    <Text>Top Batsman Predictions</Text>
-                    <Text style={styles.highlight}>45+ Runs</Text>
-                </View>
-            </View>
-
-            <Text style={styles.subheader}>Top Bowler Predictions</Text>
-            <View style={styles.section}>
-                <View style={styles.cardGray}>
-                    <Text>Jasprit Bumrah (MI)</Text>
-                    <Text style={styles.highlight}>2+ Wickets</Text>
-                </View>
-                <View style={styles.cardGray}>
-                    <Text>Deepak Chahar (CSK)</Text>
-                    <Text style={styles.highlight}>2+ Wickets</Text>
-                </View>
-            </View>
+            {apiData?.topBatsmen && (
+                <>
+                    <Text style={styles.subheader}>Top Batsman Predictions</Text>
+                    <View style={styles.section}>
+                        {apiData.topBatsmen.map((batsman, index) => (
+                            <View style={styles.cardGray} key={index}>
+                                <Text>{batsman.name}</Text>
+                                <Text style={styles.highlight}>{batsman.points}+ Runs</Text>
+                            </View>
+                        ))}
+                    </View>
+                </>
+            )}
+            {apiData?.topBowlers && (
+                <>
+                    <Text style={styles.subheader}>Top Bowler Predictions</Text>
+                    <View style={styles.section}>
+                        {apiData.topBowlers.map((bowler, index) => (
+                            <View style={styles.cardGray} key={index}>
+                                <Text>{bowler.name}</Text>
+                                <Text style={styles.highlight}>{bowler.wickets}+ Wickets</Text>
+                            </View>
+                        ))}
+                    </View>
+                </>
+            )}
         </View>
     );
 };

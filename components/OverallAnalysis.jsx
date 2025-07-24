@@ -3,7 +3,8 @@ import React from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Octicons, Ionicons } from '@expo/vector-icons';
 
-const OverallAnalysis = () => {
+const OverallAnalysis = ({fantasyData}) => {
+    console.log("Over Analy : ",fantasyData);
     return (
         <View style={styles.container}>
             <View style={styles.headerbox}>

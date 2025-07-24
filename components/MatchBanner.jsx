@@ -6,11 +6,9 @@ import axios from 'axios';
 const { width } = Dimensions.get('window');
 import moment from 'moment';
 
-const MatchBanner = ({matchBannerData}) => {
-    console.log(matchBannerData);
-    const [matchTime, setmatchTime] = useState();
-    const time = moment(matchBannerData.matchDate).format('h:mm A');
-    setmatchTime(time);
+const MatchBanner = ({ matchBannerData }) => {
+    // console.log('Inside MatchBanner:', matchBannerData);
+    const matchTime = matchBannerData?.matchDate ? moment(matchBannerData.matchDate).format('h:mm A'): '';
     return (
         <View style={styles.outerContainer}>
             <ImageBackground
@@ -42,8 +40,8 @@ const MatchBanner = ({matchBannerData}) => {
                         />
                     </View>
                     <View style={styles.details}>
-                        <Text style={styles.location}>Wankhede Stadium, Mumbai</Text>
-                        <Text style={styles.weather}>Clear | 28°C | Batting Pitch</Text>
+                        <Text style={styles.location}>{matchBannerData?.venue}</Text>
+                        <Text style={styles.weather}>{matchBannerData?.weatherReport}</Text>
                     </View>
                 </ImageBackground>
             </ImageBackground>

@@ -2,7 +2,6 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import Header from '@/components/Header';
 import MatchBanner from '@/components/MatchBanner';
 import WinProbability from '@/components/WinProbability';
-import PitchReport from '@/components/PitchReport';
 import RecentForm from '@/components/RecentForm';
 import HeadToHead from '@/components/HeadToHead';
 import HomeTabNav from '@/components/hometabs/HomeTabNav';
@@ -11,8 +10,11 @@ import axios from 'axios';
 import moment from 'moment';
 const HomeScreen = () => {
 
-    const [matchId, setmatchId] = useState('687e09ecc30e02e5166907ac');
+    const [matchId, setmatchId] = useState('687e09aa6e6c3fecda45bb65');
     const [matchBannerData, setmatchBannerData] = useState();
+    const [winprobdata, setwinprobdata] = useState();
+    const [recentForm, setrecentForm] = useState();
+    const [headToHeadStats, setheadToHeadStats] = useState();
 
     // Fetch Match Data here by matching ID..............
     useEffect(() => {
@@ -21,9 +23,16 @@ const HomeScreen = () => {
                 const response = await axios.get(`http://192.168.1.159:3000/api/match-details`, {
                     params: { matchId }
                 });
+                // console.log("Win prob",response.data.match);
                 if (response && response.data && response.data.match) {
                     const { venue, weatherReport, matchDate } = response.data.match;
+                    const { winProbability,teamA, teamB,pitchReport } = response.data.match;
+                    const {recentForm } = response.data.match;
+                    const { headToHeadStats } = response.data.match;
                     setmatchBannerData({ venue, weatherReport, matchDate });
+                    setwinprobdata({ winProbability,teamA, teamB, pitchReport });
+                    setrecentForm({ recentForm });
+                    setheadToHeadStats({ headToHeadStats,teamA, teamB });
                     console.log(matchBannerData);
                 }
             } catch (error) {
@@ -45,16 +54,13 @@ const HomeScreen = () => {
                         <MatchBanner matchBannerData={matchBannerData} />
                     </View>
                     <View style={styles.section}>
-                        <WinProbability />
+                        <WinProbability winprobdata={winprobdata} />
                     </View>
                     <View style={styles.section}>
-                        <PitchReport />
+                        <RecentForm recentForm={recentForm} />
                     </View>
                     <View style={styles.section}>
-                        <RecentForm />
-                    </View>
-                    <View style={styles.section}>
-                        <HeadToHead />
+                        <HeadToHead headToHeadStats={headToHeadStats} />
                     </View>
                     <View style={styles.section}>
                         <HomeTabNav />
