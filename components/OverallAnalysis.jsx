@@ -1,166 +1,99 @@
-import { StyleSheet, Text, View } from 'react-native';
-import React from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Octicons, Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
 
-const OverallAnalysis = ({fantasyData}) => {
-    console.log("Over Analy : ",fantasyData);
+const OverallAnalysis = ({ analysisId }) => {
+    console.log("Overall data : ", analysisId);
+    const [isLoading, setisLoading] = useState(false);
+    const [apiData, setapiData] = useState({});
+    const [analysisData, setanalysisData] = useState({});
+
+    const fetchAnalysis = async () => {
+        try {
+            const response = await axios.get(`http://192.168.1.159:3000/api/analysis-result`, {
+                params: { analysisId }
+            });
+            console.log('Analysis Success:', response.data);
+
+            const analysisObj = response.data.analysisResults.analysis || {};
+            setanalysisData(Object.entries(analysisObj));
+            setapiData(response.data.analysisResults);
+            setisLoading(false);
+
+        } catch (error) {
+            console.error('Analysis failed:', error);
+            setisLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchAnalysis();
+    }, []);
+
     return (
-        <View style={styles.container}>
-            <View style={styles.headerbox}>
-                <Ionicons name="search" size={24} color="black" />
-                <Text style={styles.header}>Overall Analysis</Text>
-            </View>
-            <View style={styles.grid}>
-                <View style={styles.card}>
-                    <LinearGradient
-                        colors={['#ffe0b200', '#ffe1be']}
-                        start={{ x: 0.5, y: 1 }}
-                        end={{ x: 0, y: 0 }}
-                        style={styles.gradientBorder}
-                    >
-                        <LinearGradient
-                            colors={['#fff8f1', '#fee5ca']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.gradientBackground}
-                        >
-                            <Text style={styles.cardTitle}>Team Strength</Text>
-                            <Text style={styles.cardValue}>77%</Text>
-                        </LinearGradient>
-                    </LinearGradient>
+        isLoading ? (
+            <ActivityIndicator size="large" color="#000" style={{ marginTop: 50 }} />
+        ) : (
+            <View style={styles.container}>
+                <View style={styles.headerbox}>
+                    <Ionicons name="search" size={24} color="black" />
+                    <Text style={styles.header}>Overall Analysis</Text>
                 </View>
-                <View style={styles.card}>
-                    <LinearGradient
-                        colors={['#bbdefb00', '#b6e2ff']}
-                        start={{ x: 0.5, y: 1 }}
-                        end={{ x: 0, y: 0 }}
-                        style={styles.gradientBorder}
-                    >
-                        <LinearGradient
-                            colors={['#e7f5ff', '#c1e6ff']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.gradientBackground}
-                        >
-                            <Text style={styles.cardTitle}>Winning Chance</Text>
-                            <Text style={styles.cardValue}>85%</Text>
-                        </LinearGradient>
-                    </LinearGradient>
-                </View>
-                <View style={styles.card}>
-                    <LinearGradient
-                        colors={['#c8e6c900', '#c8fdda']}
-                        start={{ x: 0.5, y: 1 }}
-                        end={{ x: 0, y: 0 }}
-                        style={styles.gradientBorder}
-                    >
-                        <LinearGradient
-                            colors={['#ebfff1', '#c8fdda']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.gradientBackground}
-                        >
-                            <Text style={styles.cardTitle}>Best Captain</Text>
-                            <View style={styles.textContainer}>
-                                <Text style={styles.cardText}>MS Dhoni or V Kohli</Text>
+
+                <FlatList
+                    data={analysisData || []}
+                    keyExtractor={([title], index) => `${title}-${index}`}
+                    numColumns={2}
+                    contentContainerStyle={styles.grid}
+                    renderItem={({ item }) => {
+                        const [title, value] = item;
+                        return (
+                            <View style={styles.card}>
+                                <LinearGradient
+                                    colors={['#ffe0b200', '#ffe1be']}
+                                    start={{ x: 0.5, y: 1 }}
+                                    end={{ x: 0, y: 0 }}
+                                    style={styles.gradientBorder}
+                                >
+                                    <LinearGradient
+                                        colors={['#fff8f1', '#fee5ca']}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={styles.gradientBackground}
+                                    >
+                                        <Text style={styles.cardTitle}>{title}</Text>
+                                        <Text style={styles.cardValue}>{value}</Text>
+                                    </LinearGradient>
+                                </LinearGradient>
                             </View>
-                        </LinearGradient>
-                    </LinearGradient>
-                </View>
-                <View style={styles.card}>
-                    <LinearGradient
-                        colors={['#f8bbd000', '#f6b6c1']}
-                        start={{ x: 0.5, y: 1 }}
-                        end={{ x: 0, y: 0 }}
-                        style={styles.gradientBorder}
-                    >
-                        <LinearGradient
-                            colors={['#ffecf0', '#f6b6c1']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.gradientBackground}
-                        >
-                            <Text style={styles.cardTitle}>Projected Points (Captain)</Text>
-                            <Text style={styles.cardValue}>250</Text>
-                        </LinearGradient>
-                    </LinearGradient>
-                </View>
-                <View style={styles.card}>
-                    <LinearGradient
-                        colors={['#dcedc800', '#f9c0e7']}
-                        start={{ x: 0.5, y: 1 }}
-                        end={{ x: 0, y: 0 }}
-                        style={styles.gradientBorder}
-                    >
-                        <LinearGradient
-                            colors={['#ffebf8', '#f9c0e7']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.gradientBackground}
-                        >
-                            <Text style={styles.cardTitle}>Best Vice Captain</Text>
-                            <View style={styles.textContainer}>
-                                <Text style={styles.cardText}>R Jadeja or S Gill</Text>
+                        );
+                    }}
+                />
+
+                {apiData?.strongPoints && (
+                    <>
+                        <View style={styles.strongPointsSection}>
+                            <Text style={styles.strongPointsTitle}>Strong Points:</Text>
+                            <View style={styles.bulletList}>
+                                {apiData.strongPoints
+                                    .split('.')
+                                    .filter(point => point.trim().length > 0) // remove empty strings
+                                    .map((point, index) => (
+                                        <View key={index} style={styles.bulletItem}>
+                                            <Octicons name="dot-fill" size={18} color="#101d4d" style={styles.bullet} />
+                                            <Text style={styles.bulletText}>{point.trim()}.</Text>
+                                        </View>
+                                    ))}
                             </View>
-                        </LinearGradient>
-                    </LinearGradient>
-                </View>
-                <View style={styles.card}>
-                    <LinearGradient
-                        colors={['#f8bbd000', '#aef4d8']}
-                        start={{ x: 0.5, y: 1 }}
-                        end={{ x: 0, y: 0 }}
-                        style={styles.gradientBorder}
-                    >
-                        <LinearGradient
-                            colors={['#d9faed', '#aef4d8']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            style={styles.gradientBackground}
-                        >
-                            <Text style={styles.cardTitle}>Projected Points (Vice Captain)</Text>
-                            <Text style={styles.cardValue}>220</Text>
-                        </LinearGradient>
-                    </LinearGradient>
-                </View>
+                        </View>
+                    </>
+                )}
             </View>
-            <View style={styles.strongPointsSection}>
-                <Text style={styles.strongPointsTitle}>Strong Points:</Text>
-                <View style={styles.bulletList}>
-                    <View style={styles.bulletItem}>
-                        <Octicons name="dot-fill" size={18} color="#101d4d" style={styles.bullet} />
-                        <Text style={styles.bulletText}>S Dube is in great form and expected to perform well.</Text>
-                    </View>
-                    <View style={styles.bulletItem}>
-                        <Octicons name="dot-fill" size={18} color="#101d4d" style={styles.bullet} />
-                        <Text style={styles.bulletText}>M Siraj has delivered crucial performances in key moments and maintains a high fantasy points average.</Text>
-                    </View>
-                    <View style={styles.bulletItem}>
-                        <Octicons name="dot-fill" size={18} color="#101d4d" style={styles.bullet} />
-                        <Text style={styles.bulletText}>U Patel has made a significant impact in multiple games and remains a reliable choice.</Text>
-                    </View>
-                </View>
-            </View>
-            <View style={styles.strongPointsSection}>
-                <Text style={styles.strongPointsTitle}>Important Points:</Text>
-                <View style={styles.bulletList}>
-                    <View style={styles.bulletItem}>
-                        <Octicons name="dot-fill" size={18} color="#101d4d" style={styles.bullet} />
-                        <Text style={styles.bulletText}>S Dube is in great form and expected to perform well.</Text>
-                    </View>
-                    <View style={styles.bulletItem}>
-                        <Octicons name="dot-fill" size={18} color="#101d4d" style={styles.bullet} />
-                        <Text style={styles.bulletText}>M Siraj has delivered crucial performances in key moments and maintains a high fantasy points average.</Text>
-                    </View>
-                    <View style={styles.bulletItem}>
-                        <Octicons name="dot-fill" size={18} color="#101d4d" style={styles.bullet} />
-                        <Text style={styles.bulletText}>U Patel has made a significant impact in multiple games and remains a reliable choice.</Text>
-                    </View>
-                </View>
-            </View>
-        </View>
+        )
     );
+
 };
 
 export default OverallAnalysis;
@@ -190,7 +123,7 @@ const styles = StyleSheet.create({
     card: {
         width: '48%',
         borderRadius: 8,
-        marginBottom: 10,
+        margin: 3,
         overflow: 'hidden',
     },
     gradientBorder: {
@@ -213,7 +146,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     cardValue: {
-        fontSize: 25,
+        fontSize: 18,
         fontWeight: '800',
         color: '#101d4c',
     },

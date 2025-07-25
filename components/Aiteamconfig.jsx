@@ -1,7 +1,9 @@
 import { StyleSheet, Text, View, Switch, TouchableOpacity, ScrollView } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
 
 const Aiteamconfig = () => {
     const [autoPickCaptain, setAutoPickCaptain] = useState(false)
@@ -11,9 +13,49 @@ const Aiteamconfig = () => {
     const [numTeams, setNumTeams] = useState('3 Teams')
     const [contestType, setContestType] = useState('Grand League')
     const [riskLevel, setRiskLevel] = useState('Balanced')
-
     const teamOptions = ['1 Team', '3 Teams', '5 Teams', '10 Teams']
     const contestOptions = ['Grand League', 'Head-to-Head', '50-50', 'Multi-Entry']
+    const [authUser, setauthUser] = useState({});
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const storedData = await AsyncStorage.getItem('userData');
+            // console.log("USER DATA : ", storedData);
+            setauthUser(storedData);
+        };
+        fetchUserData();
+    }, []);
+
+
+    const generateAiTeams = async () => {
+        const storedData = await AsyncStorage.getItem('userData');
+        const parsedData = storedData ? JSON.parse(storedData) : {};
+        const formData = new FormData();
+        formData.append('userId', parsedData.userid);
+        formData.append('autoPickCaptain', autoPickCaptain);
+        formData.append('autoPickViceCaptain', autoPickViceCaptain);
+        formData.append('lockStarPlayers', lockStarPlayers);
+        formData.append('avoidInjuryProne', avoidInjuryProne);
+        formData.append('numTeams', numTeams);
+        formData.append('contestType', contestType);
+        formData.append('riskLevel', riskLevel);
+        console.log('Form Data:',formData);
+
+        try {
+            const response = await axios.post(
+                'http://192.168.1.159:3000/api/insert-aiteam',
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+            console.log('Upload success');
+        } catch (error) {
+            console.error('Upload failed:', error);
+        }
+    };
     return (
         <View style={styles.container}>
             <View style={styles.titlebox}>
@@ -92,24 +134,24 @@ const Aiteamconfig = () => {
                         style={[styles.safeButton, riskLevel === 'Safe' && styles.safeButtonSelected]}
                         onPress={() => setRiskLevel('Safe')}
                     >
-                        <Text style={styles.safeButtonText}>Safe</Text>
+                        <Text style={[styles.safeButtonText, riskLevel === 'Safe' && styles.safeButtonSelected]}>Safe</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.balanceButton, riskLevel === 'Balanced' && styles.balanceButtonSelected]}
                         onPress={() => setRiskLevel('Balanced')}
                     >
-                        <Text style={styles.balanceButtonText}>Balanced</Text>
+                        <Text style={[styles.balanceButtonText, riskLevel === 'Balanced' && styles.balanceButtonSelected]}>Balanced</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.riskButton, riskLevel === 'Risky' && styles.riskButtonSelected]}
                         onPress={() => setRiskLevel('Risky')}
                     >
-                        <Text style={styles.riskButtonText}>Risky</Text>
+                        <Text style={[styles.riskButtonText, riskLevel === 'Risky' && styles.riskButtonSelected]}>Risky</Text>
                     </TouchableOpacity>
                 </View>
             </View>
 
-            <TouchableOpacity style={styles.generateButton}>
+            <TouchableOpacity style={styles.generateButton} onPress={generateAiTeams}>
                 <Text style={styles.generateButtonText}>Generate AI Teams</Text>
             </TouchableOpacity>
         </View>
@@ -223,13 +265,17 @@ const styles = StyleSheet.create({
         color: '#5f83f1',
     },
     riskButtonSelected: {
-        backgroundColor: '#fff7ed',
+        backgroundColor: '#ea580c',
+        color: '#ffffffff',
     },
     safeButtonSelected: {
-        backgroundColor: '#f0fdf4',
+        backgroundColor: 'green',
+        color: '#ffffffff',
+
     },
     balanceButtonSelected: {
-        backgroundColor: '#f2f5ff',
+        backgroundColor: '#5f83f1',
+        color: '#ffffffff',
     },
     generateButton: {
         backgroundColor: '#5f83f1',

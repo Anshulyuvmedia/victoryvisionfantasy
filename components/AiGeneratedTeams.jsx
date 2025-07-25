@@ -1,54 +1,84 @@
 import { StyleSheet, Text, View, FlatList, TextInput, TouchableOpacity, Image } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather } from '@expo/vector-icons'; // For the arrow icon
+import { Feather } from '@expo/vector-icons';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AiGeneratedTeams = () => {
+    const [apiData, setApiData] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [teams, setTeams] = useState([
-        {
-            id: '1',
-            name: 'Team Alpha',
-            initial: 'A',
-            wk: 1, bat: 5, ar: 3, bow: 2,
-            captain: 'MS Dhoni', captainStats: '120 pts', captainImage: 'https://via.placeholder.com/40',
-            viceCaptain: 'V Kohli', viceCaptainStats: '95 pts', viceCaptainImage: 'https://via.placeholder.com/40',
-            teamPoints: 450, dtPlayers: 3, zone: 'Winning',
-            teamNumber: 1
-        },
-        {
-            id: '2',
-            name: 'Team Bravo',
-            initial: 'B',
-            wk: 1, bat: 4, ar: 4, bow: 2,
-            captain: 'R Sharma', captainStats: '110 pts', captainImage: 'https://via.placeholder.com/40',
-            viceCaptain: 'S Gill', viceCaptainStats: '85 pts', viceCaptainImage: 'https://via.placeholder.com/40',
-            teamPoints: 420, dtPlayers: 2, zone: 'Losing',
-            teamNumber: 2
-        },
-        {
-            id: '3',
-            name: 'Team Charlie',
-            initial: 'C',
-            wk: 2, bat: 4, ar: 3, bow: 2,
-            captain: 'J Root', captainStats: '100 pts', captainImage: 'https://via.placeholder.com/40',
-            viceCaptain: 'B Stokes', viceCaptainStats: '90 pts', viceCaptainImage: 'https://via.placeholder.com/40',
-            teamPoints: 410, dtPlayers: 2, zone: 'Winning',
-            teamNumber: 1
-        },
-        {
-            id: '4',
-            name: 'Team Delta',
-            initial: 'D',
-            wk: 1, bat: 5, ar: 2, bow: 3,
-            captain: 'K Williamson', captainStats: '115 pts', captainImage: 'https://via.placeholder.com/40',
-            viceCaptain: 'T Southee', viceCaptainStats: '80 pts', viceCaptainImage: 'https://via.placeholder.com/40',
-            teamPoints: 430, dtPlayers: 3, zone: 'Losing',
-            teamNumber: 2
-        },
-    ]);
 
-    const filteredTeams = teams.filter(team =>
+    const fetchGeneratedAiTeams = async () => {
+        try {
+            const storedData = await AsyncStorage.getItem('userData');
+            const parsedData = storedData ? JSON.parse(storedData) : {};
+            const userid = parsedData.userid;
+            console.log("USER DATA AI: ", parsedData.userid);
+            const response = await axios.get(`http://192.168.1.159:3000/api/get-ai-teams`, {
+                params: { userid }
+            });
+            console.log('API Response:', response.data);
+
+            // Handle the case where results is an object with a players array
+            const results = response.data.results;
+            let processedTeams = [];
+
+            if (results && results.players && Array.isArray(results.players)) {
+                // Process single team
+                const players = results.players;
+
+                // Calculate role counts
+                const roleCounts = players.reduce(
+                    (acc, player) => {
+                        if (player.role === 'WK') acc.wk += 1;
+                        else if (player.role === 'BAT') acc.bat += 1;
+                        else if (player.role === 'AR') acc.ar += 1;
+                        else if (player.role === 'BOW') acc.bow += 1;
+                        return acc;
+                    },
+                    { wk: 0, bat: 0, ar: 0, bow: 0 }
+                );
+
+                // Find captain and vice-captain
+                const captain = players.find(player => player.isCaptain) || {};
+                const viceCaptain = players.find(player => player.isViceCaptain) || {};
+
+                // Calculate total points
+                const totalPoints = players.reduce((sum, player) => sum + (player.points || 0), 0);
+
+                // Create team object
+                processedTeams = [{
+                    id: '1',
+                    name: 'Team 1',
+                    initial: '1',
+                    ...roleCounts,
+                    captain: captain.name || 'Not selected',
+                    captainStats: `${captain.points || 0} pts`,
+                    captainImage: captain.image || 'https://via.placeholder.com/40',
+                    viceCaptain: viceCaptain.name || 'Not selected',
+                    viceCaptainStats: `${viceCaptain.points || 0} pts`,
+                    viceCaptainImage: viceCaptain.image || 'https://via.placeholder.com/40',
+                    teamPoints: totalPoints,
+                    dtPlayers: players.length,
+                    zone: totalPoints > 1000 ? 'Winning' : totalPoints > 800 ? 'Competitive' : 'Chasing',
+                    teamNumber: 1
+                }];
+            } else {
+                console.warn('No valid players array found in response.data.results');
+            }
+
+            setApiData(processedTeams);
+        } catch (error) {
+            console.error('Failed to fetch AI teams:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchGeneratedAiTeams();
+    }, []);
+
+    const filteredTeams = apiData.filter(team =>
         team.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -60,7 +90,6 @@ const AiGeneratedTeams = () => {
                 end={{ x: 1, y: 1 }}
                 style={styles.gradientBackground}
             >
-                {/* Card Header */}
                 <View style={styles.cardHeader}>
                     <View style={styles.statsContainer}>
                         <Text style={styles.statText}>WK: {item.wk}</Text>
@@ -81,7 +110,6 @@ const AiGeneratedTeams = () => {
                     end={{ x: 1, y: 1 }}
                     style={styles.gradientBorder}
                 >
-                    {/* Card Content */}
                     <View style={styles.cardContent}>
                         <View style={styles.playerSection}>
                             <View style={styles.playerRow}>
@@ -91,7 +119,6 @@ const AiGeneratedTeams = () => {
                                     <Text style={styles.playerName}>{item.captain}</Text>
                                     <View style={styles.pointsRow}>
                                         <Text style={styles.playerStats}>{item.captainStats}</Text>
-                                        <Text style={styles.playerStats}>{item.captainStats}</Text>
                                     </View>
                                 </View>
                             </View>
@@ -99,10 +126,9 @@ const AiGeneratedTeams = () => {
                                 <Text style={styles.playerTitle}>VC</Text>
                                 <Image source={{ uri: item.viceCaptainImage }} style={styles.playerImage} />
                                 <View style={styles.playerDetails}>
-                                    <Text style={styles.playerName}>{item.captain}</Text>
+                                    <Text style={styles.playerName}>{item.viceCaptain}</Text>
                                     <View style={styles.pointsRow}>
-                                        <Text style={styles.playerStats}>{item.captainStats}</Text>
-                                        <Text style={styles.playerStats}>{item.captainStats}</Text>
+                                        <Text style={styles.playerStats}>{item.viceCaptainStats}</Text>
                                     </View>
                                 </View>
                             </View>
@@ -118,7 +144,6 @@ const AiGeneratedTeams = () => {
                         </View>
                     </View>
                 </LinearGradient>
-                {/* Card Footer */}
                 <View style={styles.cardFooter}>
                     <TouchableOpacity style={styles.copyButton}>
                         <Text style={styles.copyButtonText}>Copy Team</Text>
@@ -151,6 +176,7 @@ const AiGeneratedTeams = () => {
 
 export default AiGeneratedTeams;
 
+// Styles remain unchanged
 const styles = StyleSheet.create({
     container: {
         padding: 16,
@@ -177,7 +203,6 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     card: {
-        // padding: 12,
         marginBottom: 10,
         overflow: 'hidden',
         borderRadius: 20,
@@ -242,7 +267,7 @@ const styles = StyleSheet.create({
     },
     playerSection: {
         marginBottom: 10,
-        flexDirection: 'col',
+        flexDirection: 'column',
         flex: 1,
     },
     playerRow: {
@@ -309,7 +334,6 @@ const styles = StyleSheet.create({
         color: '#000',
         fontWeight: 'bold',
     },
-
     dtLabel: {
         fontSize: 12,
         color: '#fff',
@@ -319,11 +343,11 @@ const styles = StyleSheet.create({
     dtRow: {
         flexDirection: 'row',
         backgroundColor: '#4CAF50',
-        paddingInline: '10',
+        paddingHorizontal: 10,
         borderRadius: 10,
     },
     zoneText: {
-        paddingInline: '10',
+        paddingHorizontal: 10,
         borderWidth: 1,
         borderColor: '#4CAF50',
         marginTop: 5,

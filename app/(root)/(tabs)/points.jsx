@@ -6,7 +6,6 @@ import OverallAnalysis from '@/components/OverallAnalysis';
 import { MaterialCommunityIcons } from '@expo/vector-icons'; // Ensure this is installed
 
 const Points = () => {
-    const [fantasyData, setFantasyData] = useState({});
     return (
         <View style={styles.container}>
             <Header />
@@ -16,10 +15,7 @@ const Points = () => {
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.section}>
-                    <FantasyTracker setFantasyData={setFantasyData} />
-                </View>
-                <View style={styles.section}>
-                    <OverallAnalysis fantasyData={fantasyData}/>
+                    <FantasyTracker/>
                 </View>
             </ScrollView>
         </View>

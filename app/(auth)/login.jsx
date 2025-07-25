@@ -53,7 +53,7 @@ const LoginScreen = () => {
             });
             
             if (response.data.status == true) {
-                console.log("USER DATA : ",response.data.userdata);
+                // console.log("USER DATA : ",response.data.userdata);
                 setuserdata(response.data.userdata);
                 // Save session/token (dummy in this case)
                 await AsyncStorage.setItem('userToken', response.data.userdata._id);
@@ -64,7 +64,7 @@ const LoginScreen = () => {
                     email: response.data.userdata.email,
                     mobilenumber: response.data.userdata.mobilenumber,
                 };
-                console.log("USER DATA : ",userData);
+                // console.log("USER DATA : ",userData);
                 await AsyncStorage.setItem('userData', JSON.stringify(userData));
 
                 router.replace('/(root)/(tabs)/');

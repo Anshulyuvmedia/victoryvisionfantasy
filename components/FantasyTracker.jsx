@@ -5,17 +5,21 @@ import * as DocumentPicker from 'expo-document-picker'; // Import document picke
 import { MaterialCommunityIcons } from '@expo/vector-icons'; // Ensure this is installed
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import OverallAnalysis from './OverallAnalysis';
 
-const FantasyTracker = ({setFantasyData}) => {
+const FantasyTracker = () => {
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileData, setfileData] = useState(null);
     const [authUser, setauthUser] = useState({});
     const [isLoading, setisLoading] = useState(false);
+    const [analysisData, setAnalysisData] = useState(null);
+    const [showAnalysis, setshowAnalysis] = useState(null);
+
 
     useEffect(() => {
         const fetchUserData = async () => {
             const storedData = await AsyncStorage.getItem('userData');
-            console.log("USER DATA : ", storedData);
+            // console.log("USER DATA : ", storedData);
             setauthUser(storedData);
         };
         fetchUserData();
@@ -58,6 +62,16 @@ const FantasyTracker = ({setFantasyData}) => {
             type: file.mimeType || 'image/jpeg',
         });
         formData.append('userId', parsedData.userid);
+        formData.append('matchId', '687e09aa6e6c3fecda45bb65');
+        formData.append('strongPoints', 'S Dube is in great form and expected to perform well.M Siraj has delivered crucial performances in key moments and maintains a high fantasy points average.');
+        formData.append('analysis', JSON.stringify({
+            "Team Strength": "77%",
+            "Winning Chance": "85%",
+            "Best Captain": "MS Dhoni or V Kohli",
+            "Projected Points (Captain)": 250,
+            "Best Vice Captain": "R Jadeja or S Gill",
+            "Projected Points (Vice Captain)": 220
+        }));
 
         try {
             const response = await axios.post(
@@ -69,9 +83,9 @@ const FantasyTracker = ({setFantasyData}) => {
                     },
                 }
             );
-            setFantasyData({"Name" : "Victory"})
-            console.log('Upload success:', response.data);
+            console.log('Upload success:', response.data.dataid);
             setisLoading(false);
+            setAnalysisData(response.data.dataid);
         } catch (error) {
             console.error('Upload failed:', error);
         }
@@ -100,18 +114,17 @@ const FantasyTracker = ({setFantasyData}) => {
                     <Text style={styles.selectedFileText}>Selected File: {selectedFile}</Text>
                     <TouchableOpacity
                         style={styles.chatButton}
-                        onPress={uploadFile} // Simplified handler
+                        onPress={uploadFile}
                     >
                         <View style={styles.buttonContent}>
                             <MaterialCommunityIcons name="robot-excited-outline" size={20} color="#ea580c" />
                             <Text style={styles.buttonText}>
                                 Analyze With AI
-                                {isLoading == true && <ActivityIndicator color="#ea580c"/>}
+                                {isLoading == true && <ActivityIndicator color="#ea580c" />}
                             </Text>
                         </View>
                     </TouchableOpacity>
                 </>
-
             )}
             <View style={styles.whatYouGetSection}>
                 <Text style={styles.whatYouGetText}>What you'll get:</Text>
@@ -140,6 +153,22 @@ const FantasyTracker = ({setFantasyData}) => {
             <Text style={styles.recommendationText}>
                 AI suggest the best captain and vice-captain based on your screenshot and recent player performance. Use these tips to create a stronger team.
             </Text>
+            {analysisData && (
+                <View style={{ marginVertical: 20 }}>
+                    <TouchableOpacity
+                        style={styles.chatButton}
+                        onPress={() => setshowAnalysis(true)}
+                    >
+                        <View style={styles.buttonContent}>
+                            <MaterialCommunityIcons name="eye-outline" size={20} color="#ea580c" />
+                            <Text style={styles.buttonText}>View Analysis</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            )}
+            {analysisData && showAnalysis && (
+                <OverallAnalysis analysisId={analysisData} />
+            )}
         </View>
     );
 };
