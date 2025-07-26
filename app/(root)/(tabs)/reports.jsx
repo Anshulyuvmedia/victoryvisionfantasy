@@ -6,7 +6,9 @@ import PerformanceSummery from '@/components/PerformanceSummery';
 import YouTopPlayerPicks from '@/components/YouTopPlayerPicks';
 import CaptainAnalysis from '@/components/CaptainAnalysis';
 
+
 const Reports = () => {
+
     return (
         <View style={styles.container}>
             <Header />

@@ -4,9 +4,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Clipboard from 'expo-clipboard';
+import { router } from 'expo-router';
+
 
 const AiGeneratedTeams = () => {
     const [apiData, setApiData] = useState([]);
+    console.log(apiData);
+    const [players, setPlayers] = useState([]);
+    // const [copiedText, setCopiedText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
     const fetchGeneratedAiTeams = async () => {
@@ -14,19 +20,22 @@ const AiGeneratedTeams = () => {
             const storedData = await AsyncStorage.getItem('userData');
             const parsedData = storedData ? JSON.parse(storedData) : {};
             const userid = parsedData.userid;
-            console.log("USER DATA AI: ", parsedData.userid);
+            // console.log("USER DATA AI: ", parsedData.userid);
             const response = await axios.get(`http://192.168.1.159:3000/api/get-ai-teams`, {
                 params: { userid }
             });
-            console.log('API Response:', response.data);
+            // console.log('API Response:', response.data);
 
             // Handle the case where results is an object with a players array
             const results = response.data.results;
+            // console.log("results :", results);
+
             let processedTeams = [];
 
             if (results && results.players && Array.isArray(results.players)) {
                 // Process single team
                 const players = results.players;
+                setPlayers(players);
 
                 // Calculate role counts
                 const roleCounts = players.reduce(
@@ -62,7 +71,8 @@ const AiGeneratedTeams = () => {
                     teamPoints: totalPoints,
                     dtPlayers: players.length,
                     zone: totalPoints > 1000 ? 'Winning' : totalPoints > 800 ? 'Competitive' : 'Chasing',
-                    teamNumber: 1
+                    teamNumber: 1,
+                    teamId : results._id
                 }];
             } else {
                 console.warn('No valid players array found in response.data.results');
@@ -72,6 +82,13 @@ const AiGeneratedTeams = () => {
         } catch (error) {
             console.error('Failed to fetch AI teams:', error);
         }
+    };
+
+    // Handle copy team button press
+    const handleCopyTeam = async () => {
+        const playerJSON = players.map(player => JSON.stringify(player, null, 2)).join(',\n');
+        await Clipboard.setStringAsync(playerJSON);
+        // console.log("Copied Player JSON:\n", playerJSON);
     };
 
     useEffect(() => {
@@ -99,7 +116,7 @@ const AiGeneratedTeams = () => {
                     </View>
                     <View style={styles.teamInfo}>
                         <Text style={styles.teamNumber}>T{item.id}</Text>
-                        <TouchableOpacity style={styles.arrowButton}>
+                        <TouchableOpacity style={styles.arrowButton} onPress={() => router.push(`/(root)/playerlist/${item.teamId}`)}>
                             <Feather name="arrow-up-right" size={16} color="#fff" />
                         </TouchableOpacity>
                     </View>
@@ -145,7 +162,7 @@ const AiGeneratedTeams = () => {
                     </View>
                 </LinearGradient>
                 <View style={styles.cardFooter}>
-                    <TouchableOpacity style={styles.copyButton}>
+                    <TouchableOpacity style={styles.copyButton} onPress={handleCopyTeam}>
                         <Text style={styles.copyButtonText}>Copy Team</Text>
                         <Feather name="copy" size={16} color="#000" />
                     </TouchableOpacity>
@@ -167,7 +184,7 @@ const AiGeneratedTeams = () => {
             <FlatList
                 data={filteredTeams}
                 renderItem={renderTeamCard}
-                keyExtractor={item => item.id}
+                keyExtractor={(item) => item._id}
                 contentContainerStyle={styles.listContent}
             />
         </View>

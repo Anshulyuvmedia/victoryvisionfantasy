@@ -2,8 +2,12 @@ import { StyleSheet, Text, View } from 'react-native'
 import React from 'react'
 import { LinearGradient } from 'expo-linear-gradient';
 import { Octicons, Ionicons } from '@expo/vector-icons';
+import { useContext } from 'react';
+import { GlobalContextReport } from '../app/GlobalContextReport';
 
 const PerformanceSummery = () => {
+    
+    const {apiData} = useContext(GlobalContextReport);
     return (
         <View style={styles.container}>
             <View style={styles.headerbox}>
@@ -23,7 +27,7 @@ const PerformanceSummery = () => {
                             end={{ x: 1, y: 1 }}
                             style={styles.gradientBackground}
                         >
-                            <Text style={styles.cardValue}>2,450</Text>
+                            <Text style={styles.cardValue}>{apiData.netProfit}</Text>
                             <Text style={styles.cardTitle}>Net Profit</Text>
                             <Text style={styles.cardValue}>156</Text>
                             <Text style={styles.cardTitle}>Contest Played</Text>
@@ -43,9 +47,9 @@ const PerformanceSummery = () => {
                             end={{ x: 1, y: 1 }}
                             style={styles.gradientBackground}
                         >
-                            <Text style={styles.cardValue}>68%</Text>
+                            <Text style={styles.cardValue}>{apiData.winRate}%</Text>
                             <Text style={styles.cardTitle}>Winning Rate</Text>
-                            <Text style={styles.cardValue}>12.5</Text>
+                            <Text style={styles.cardValue}>{apiData.avgRank}</Text>
                             <Text style={styles.cardTitle}>Avg Rank</Text>
                         </LinearGradient>
                     </LinearGradient>

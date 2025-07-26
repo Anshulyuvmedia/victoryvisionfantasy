@@ -1,5 +1,5 @@
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, Image } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { moderateScale, verticalScale, scale } from 'react-native-size-matters';
@@ -15,6 +15,7 @@ const LoginScreen = () => {
     const [isOtpSent, setIsOtpSent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [userdata, setuserdata] = useState(false);
+     const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const generateOtp = async () => {
         if (!phoneNumber || phoneNumber.length !== 10) {
@@ -79,6 +80,18 @@ const LoginScreen = () => {
         }
     };
 
+    useEffect(() => {
+        const checkAuthState = async () => {
+            try {
+                const token = await AsyncStorage.getItem('userToken');
+                // console.log("userToken : ", token);
+                router.push('/(root)/');
+            } catch (error) {
+                console.error('Error checking auth state:', error);
+            }
+        };
+        checkAuthState();
+    }, []);
 
     return (
         <View style={styles.container}>

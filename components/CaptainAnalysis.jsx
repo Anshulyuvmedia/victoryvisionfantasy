@@ -1,58 +1,31 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image } from 'react-native';
-import React, { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
+import { GlobalContextReport } from '../app/GlobalContextReport';
+import { useContext } from 'react';
 
 const CaptainAnalysis = () => {
-    const [captains, setCaptains] = useState([
-        {
-            id: '1',
-            name: 'MS Dhoni',
-            matches: 50,
-            wins: 40,
-            points: '120 pts',
-            winPercentage: '80%',
-            successRate: 80,
-            image: 'https://via.placeholder.com/40'
-        },
-        {
-            id: '2',
-            name: 'V Kohli',
-            matches: 45,
-            wins: 32,
-            points: '95 pts',
-            winPercentage: '71%',
-            successRate: 71,
-            image: 'https://via.placeholder.com/40'
-        },
-        {
-            id: '3',
-            name: 'R Sharma',
-            matches: 40,
-            wins: 25,
-            points: '110 pts',
-            winPercentage: '62%',
-            successRate: 62,
-            image: 'https://via.placeholder.com/40'
-        },
-        {
-            id: '4',
-            name: 'R Jadeja',
-            matches: 35,
-            wins: 20,
-            points: '85 pts',
-            winPercentage: '57%',
-            successRate: 57,
-            image: 'https://via.placeholder.com/40'
-        },
-    ]);
+    const { apiData } = useContext(GlobalContextReport);
+    const [captainAnalysis, setCaptainAnalysis] = useState([]);
 
-    // Determine best and need work players based on win percentage
-    const bestChoicePlayer = captains.reduce((max, current) =>
-        max.winPercentage > current.winPercentage ? max : current
-    );
-    const needWorkPlayer = captains.reduce((min, current) =>
-        min.winPercentage < current.winPercentage ? min : current
-    );
+    useEffect(() => {
+        if (apiData?.captainAnalysis?.length > 0) {
+            const formatted = apiData.captainAnalysis.map((item) => ({
+                ...item,
+                _id: typeof item._id === 'object' && item._id.$oid ? item._id.$oid : item._id
+            }));
+            setCaptainAnalysis(formatted);
+        }
+    }, [apiData]);
+
+    // Calculate average success rate from captainAnalysis
+    const avgSuccessRate = captainAnalysis.length > 0
+        ? Math.round(captainAnalysis.reduce((sum, c) => sum + c.successRate, 0) / captainAnalysis.length)
+        : 0;
+
+    // Get best choice and need work players from playerPerformance
+    const bestChoicePlayer = apiData?.playerPerformance?.bestChoice || { player: 'N/A', successRate: 0 };
+    const needWorkPlayer = apiData?.playerPerformance?.needWork || { player: 'N/A', successRate: 0 };
 
     return (
         <View style={styles.container}>
@@ -63,10 +36,10 @@ const CaptainAnalysis = () => {
                 <Text style={styles.sectionTitle}>Success Rate Overview</Text>
                 <View style={styles.progressContainer}>
                     <Text style={styles.progressText}>
-                        Overall Success Rate: {Math.round(captains.reduce((sum, c) => sum + c.successRate, 0) / captains.length)}%
+                        Overall Success Rate: {avgSuccessRate}%
                     </Text>
                     <View style={styles.progressBar}>
-                        <View style={[styles.progressFill, { width: `${Math.round(captains.reduce((sum, c) => sum + c.successRate, 0) / captains.length)}%` }]} />
+                        <View style={[styles.progressFill, { width: `${avgSuccessRate}%` }]} />
                     </View>
                 </View>
             </View>
@@ -89,7 +62,8 @@ const CaptainAnalysis = () => {
                                 style={styles.gradientBackground}
                             >
                                 <Text style={styles.playerLabelBest}>Best Choice</Text>
-                                <Text style={styles.playerName}>{bestChoicePlayer.name}</Text>
+                                <Text style={styles.playerName}>{bestChoicePlayer.player}</Text>
+                                <Text style={styles.playerStat}>Success Rate: {bestChoicePlayer.successRate}%</Text>
                             </LinearGradient>
                         </LinearGradient>
                     </View>
@@ -107,7 +81,8 @@ const CaptainAnalysis = () => {
                                 style={styles.gradientBackground}
                             >
                                 <Text style={styles.playerLabel}>Need Work</Text>
-                                <Text style={styles.playerName}>{needWorkPlayer.name}</Text>
+                                <Text style={styles.playerName}>{needWorkPlayer.player}</Text>
+                                <Text style={styles.playerStat}>Success Rate: {needWorkPlayer.successRate}%</Text>
                             </LinearGradient>
                         </LinearGradient>
                     </View>
@@ -117,17 +92,16 @@ const CaptainAnalysis = () => {
             {/* Third Section: AI Insights */}
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>AI Insights</Text>
-                <View style={styles.insightbox}>
-                    <Text style={styles.title}>Strong Captain Choice</Text>
-                    <Text style={styles.insightText}>
-                        Based on current data, captains with higher win percentages (e.g., MS Dhoni at 80%) are recommended for upcoming matches. 
-                    </Text>
-                </View>
-                <View style={styles.insightbox}>
-                    <Text style={styles.title}>Strong Captain Choice</Text>
-                    <Text style={styles.insightText}> Focus on improving selections for lower-performing captains like R Jadeja (57%). Optimize team composition with more all-rounders for balanced performance.
-                    </Text>
-                </View>
+                {apiData?.aiInsights?.map((insight, index) => (
+                    <View key={index} style={styles.insightbox}>
+                        <Text style={[styles.title, { color: insight.colorCode || '#3aa460' }]}>
+                            Recommendation
+                        </Text>
+                        <Text style={styles.insightText}>
+                            {insight.suggestion}
+                        </Text>
+                    </View>
+                ))}
             </View>
         </View>
     );
@@ -231,7 +205,6 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 12,
-        color: '#3aa460',
         fontWeight: 'bold'
     },
 });

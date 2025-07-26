@@ -7,10 +7,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
-
+import { GlobalProviderReport } from './GlobalContextReport';
 SplashScreen.preventAutoHideAsync();
 
 export default function AppLayout() {
+    
     const router = useRouter();
     const [loaded, error] = useFonts({
         SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
@@ -41,7 +42,7 @@ function RootLayoutNav() {
         const checkAuthState = async () => {
             try {
                 const token = await AsyncStorage.getItem('userToken');
-                console.log("userToken : ",token);
+                // console.log("userToken : ", token);
                 setIsAuthenticated(!!token);
             } catch (error) {
                 console.error('Error checking auth state:', error);
@@ -66,6 +67,7 @@ function RootLayoutNav() {
     // }, [isAuthenticated]);
 
     return (
+
         <SafeAreaView style={{ flex: 1, paddingTop: insets.top }}>
             <View
                 style={[
@@ -75,14 +77,21 @@ function RootLayoutNav() {
             >
                 <StatusBar style="light" />
             </View>
-            <Stack screenOptions={{ headerShown: false }}>
-                {isAuthenticated ? (
-                    <Stack.Screen name="(root)" options={{ headerShown: false }} />
-                ) : (
-                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                )}
-            </Stack>
+            <GlobalProviderReport>
+                <Stack screenOptions={{ headerShown: false }}>
+                    {isAuthenticated ? (
+
+                        <Stack.Screen name="(root)" options={{ headerShown: false }} />
+
+
+                    ) : (
+                        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                    )}
+                </Stack>
+            </GlobalProviderReport>
         </SafeAreaView>
+
+
     );
 }
 

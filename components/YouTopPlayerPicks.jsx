@@ -1,27 +1,30 @@
 import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Feather } from '@expo/vector-icons'; // For the pick icon
+import { useContext } from 'react';
+import { GlobalContextReport } from '../app/GlobalContextReport';
 
 const YouTopPlayerPicks = () => {
-    const [players, setPlayers] = useState([
-        { id: '1', name: 'MS Dhoni', pickedTimes: 15, avgPts: '115 pts', success: '85%' },
-        { id: '2', name: 'V Kohli', pickedTimes: 12, avgPts: '92 pts', success: '78%' },
-        { id: '3', name: 'R Sharma', pickedTimes: 10, avgPts: '105 pts', success: '70%' },
-        { id: '4', name: 'R Jadeja', pickedTimes: 8, avgPts: '80 pts', success: '65%' },
-    ]);
+    const { apiData } = useContext(GlobalContextReport);
+    const [topPicks, settopPicks] = useState([]);
+    useEffect(() => {
+        if (apiData?.topPicks) {
+            settopPicks(apiData.topPicks);
+        }
+    }, [apiData]);
 
     const renderPlayerCard = ({ item }) => (
         <View style={styles.card}>
             <View style={styles.cardContent}>
                 <View style={styles.playerInfo}>
-                    <Text style={styles.playerName}>{item.name}</Text>
+                    <Text style={styles.playerName}>{item.player}</Text>
                     <View style={styles.statsrow}>
-                        <Text style={styles.playerStat}>Picked: {item.pickedTimes} times | </Text>
-                        <Text style={styles.playerStat}>Avg Pts: {item.avgPts}</Text>
+                        <Text style={styles.playerStat}>Picked: {item.picked} | </Text>
+                        <Text style={styles.playerStat}>Avg Pts: {item.avgPoints}</Text>
                     </View>
                 </View>
-                <Text style={styles.playerSuccess}>Success: {item.success}</Text>
+                <Text style={styles.playerSuccess}>Success: {item.successRate}%</Text>
             </View>
         </View>
     );
@@ -30,7 +33,7 @@ const YouTopPlayerPicks = () => {
         <View style={styles.container}>
             <Text style={styles.header}>Your Top Player Picks</Text>
             <FlatList
-                data={players}
+                data={topPicks.slice(0, 10)}
                 renderItem={renderPlayerCard}
                 keyExtractor={item => item.id}
                 contentContainerStyle={styles.listContent}

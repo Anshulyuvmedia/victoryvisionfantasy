@@ -1,64 +1,46 @@
 import { StyleSheet, View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { moderateScale, verticalScale, scale } from 'react-native-size-matters';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../../components/Header';
+import { useContext } from 'react';
+import { GlobalContextReport } from '../GlobalContextReport';
 
 const NotificationsScreen = () => {
     const [notifications, setNotifications] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const { notificationapiData } = useContext(GlobalContextReport);
 
-    // Sample notifications for demo
-    const sampleNotifications = [
-        {
-            id: '1',
-            title: 'Welcome!',
-            message: 'Thank you for joining our app.',
-            timestamp: new Date().toISOString(),
-            isRead: false,
-        },
-        {
-            id: '2',
-            title: 'Update Available',
-            message: 'A new version of the app is available.',
-            timestamp: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-            isRead: false,
-        },
-    ];
-
-    // Load notifications from AsyncStorage
     useEffect(() => {
-        const loadNotifications = async () => {
-            try {
-                setIsLoading(true);
-                const storedNotifications = await AsyncStorage.getItem('notifications');
-                if (storedNotifications) {
-                    setNotifications(JSON.parse(storedNotifications));
-                } else {
-                    // Initialize with sample notifications if none exist
-                    await AsyncStorage.setItem('notifications', JSON.stringify(sampleNotifications));
-                    setNotifications(sampleNotifications);
-                }
-            } catch (error) {
-                console.error('Error loading notifications:', error);
-                Alert.alert('Error', 'Failed to load notifications.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
+        setIsLoading(true);
+        try {
+            // Filter and format notificationapiData, ensuring only valid notifications are included
+            const validNotifications = notificationapiData
+                .filter(item => item._id && item.title && item.message && item.createdAt) // Ensure required fields exist
+                .map(item => ({
+                    id: typeof item._id === 'object' && item._id.$oid ? item._id.$oid : item._id,
+                    title: item.title,
+                    message: item.message,
+                    timestamp: item.createdAt,
+                    isRead: item.isRead || false // Use isRead if provided, default to false
+                }));
 
-        loadNotifications();
-    }, []);
+            setNotifications(validNotifications);
+        } catch (error) {
+            console.error('Error processing notifications:', error);
+            Alert.alert('Error', 'Failed to load notifications.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [notificationapiData]);
 
     // Mark a notification as read
-    const markAsRead = async (id) => {
+    const markAsRead = (id) => {
         try {
             const updatedNotifications = notifications.map((notif) =>
                 notif.id === id ? { ...notif, isRead: true } : notif
             );
             setNotifications(updatedNotifications);
-            await AsyncStorage.setItem('notifications', JSON.stringify(updatedNotifications));
         } catch (error) {
             console.error('Error marking notification as read:', error);
             Alert.alert('Error', 'Failed to mark notification as read.');
@@ -66,9 +48,8 @@ const NotificationsScreen = () => {
     };
 
     // Clear all notifications
-    const clearAllNotifications = async () => {
+    const clearAllNotifications = () => {
         try {
-            await AsyncStorage.setItem('notifications', JSON.stringify([]));
             setNotifications([]);
             Alert.alert('Success', 'All notifications cleared.');
         } catch (error) {
