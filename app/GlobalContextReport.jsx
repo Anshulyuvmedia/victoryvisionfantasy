@@ -6,6 +6,7 @@ export const GlobalContextReport = createContext();
 export const GlobalProviderReport = ({ children }) => {
   const [apiData, setApiData] = useState({});
   const [notificationapiData, setnotificationapiData] = useState({});
+  const [todaymatches, settodaymatches] = useState({});
 
   const fetchReport = async () => {
     const storedData = await AsyncStorage.getItem('userData');
@@ -26,11 +27,13 @@ export const GlobalProviderReport = ({ children }) => {
       setisLoading(false);
     }
   };
+
+
   const fetchNotifications = async () => {
     const storedData = await AsyncStorage.getItem('userData');
     const parsedData = storedData ? JSON.parse(storedData) : {};
     const userid = parsedData.userid;
-    console.log("GLOBAL USER userid :", userid);
+    // console.log("GLOBAL USER userid :", userid);
 
     try {
       const response = await axios.get(`http://192.168.1.159:3000/api/get-notifications`, {
@@ -45,14 +48,27 @@ export const GlobalProviderReport = ({ children }) => {
     }
   };
 
+  const fetchCurrentMatches = async () => {
+    try {
+      const response = await axios.get(`http://192.168.1.159:3000/api/current-matches`,
+      );
+      //console.log('Today Match Data:', response.data.matches);
+      settodaymatches(response.data.matches);
+    } catch (error) {
+      console.error('Global failed:', error);
+      setisLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchReport();
     fetchNotifications();
+    fetchCurrentMatches();
   }, []);
 
 
   return (
-    <GlobalContextReport.Provider value={{ apiData, notificationapiData }}>
+    <GlobalContextReport.Provider value={{ apiData, notificationapiData,todaymatches }}>
       {children}
     </GlobalContextReport.Provider>
   );
