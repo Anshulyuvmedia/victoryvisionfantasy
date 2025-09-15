@@ -1,7 +1,6 @@
-import { StyleSheet, Text, View, useWindowDimensions, Animated } from 'react-native'
-import React, { useState } from 'react'
+import { StyleSheet, Text, View, useWindowDimensions, Animated } from 'react-native';
+import React, { useState } from 'react';
 import LinearGradient from 'react-native-linear-gradient';
-
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import Twenty20 from './Twenty20';
 import OneDay from './OneDay';
@@ -10,21 +9,17 @@ import { useContext } from 'react';
 import { GlobalContextReport } from '../../app/GlobalContextReport';
 
 const TodayMatches = () => {
-
     const { todaymatches } = useContext(GlobalContextReport);
-
     // Ensure todaymatches is always an array to avoid TypeError
     const safeTodayMatches = Array.isArray(todaymatches) ? todaymatches : [];
 
     // Filter matches by type
     const matchesByType = {
-        Twenty20: safeTodayMatches.filter(match => match.matchType === 'Twenty20'),
-        OneDay: safeTodayMatches.filter(match => match.matchType === 'OneDay'),
-        TestMatches: safeTodayMatches.filter(match => match.matchType === 'TestMatches'),
+        Twenty20: safeTodayMatches.filter(match => match.format === 3),
+        OneDay: safeTodayMatches.filter(match => match.format === 7),
+        TestMatches: safeTodayMatches.filter(match => match.format === 5),
     };
-
-    //  console.log("Twenty 20 :", matchesByType.Twenty20);
-
+    //   console.log("Twenty Matches",Twenty20.length);
 
     const renderScene = SceneMap({
         Twenty20: () => <Twenty20 data={matchesByType.Twenty20} />,
@@ -110,6 +105,7 @@ const TodayMatches = () => {
             />
         );
     };
+
     return (
         <View style={styles.container}>
             <TabView
@@ -122,10 +118,10 @@ const TodayMatches = () => {
                 renderTabBar={renderTabBar}
             />
         </View>
-    )
-}
+    );
+};
 
-export default TodayMatches
+export default TodayMatches;
 
 const styles = StyleSheet.create({
     container: {
@@ -133,10 +129,10 @@ const styles = StyleSheet.create({
     },
     tabView: {
         borderRadius: 24,
-        flexGrow: 1, // Allow TabView to grow with content
+        flexGrow: 1,
     },
     sceneContainer: {
-        flexGrow: 1, // Allow scenes to grow based on content
+        flexGrow: 1,
     },
     tabBar: {
         backgroundColor: '#5f83f1',
@@ -182,5 +178,4 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#000',
     },
-
-})
+});

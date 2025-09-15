@@ -7,12 +7,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 
-
 const AiGeneratedTeams = () => {
     const [apiData, setApiData] = useState([]);
-    console.log(apiData);
     const [players, setPlayers] = useState([]);
-    // const [copiedText, setCopiedText] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
 
     const fetchGeneratedAiTeams = async () => {
@@ -20,20 +17,16 @@ const AiGeneratedTeams = () => {
             const storedData = await AsyncStorage.getItem('userData');
             const parsedData = storedData ? JSON.parse(storedData) : {};
             const userid = parsedData.userid;
-            // console.log("USER DATA AI: ", parsedData.userid);
+            console.log("USER DATA AI: ", parsedData.userid);
             const response = await axios.get(`http://192.168.1.159:3000/api/get-ai-teams`, {
                 params: { userid }
             });
             // console.log('API Response:', response.data);
 
-            // Handle the case where results is an object with a players array
             const results = response.data.results;
-            // console.log("results :", results);
-
             let processedTeams = [];
 
             if (results && results.players && Array.isArray(results.players)) {
-                // Process single team
                 const players = results.players;
                 setPlayers(players);
 
@@ -49,30 +42,29 @@ const AiGeneratedTeams = () => {
                     { wk: 0, bat: 0, ar: 0, bow: 0 }
                 );
 
-                // Find captain and vice-captain
-                const captain = players.find(player => player.isCaptain) || {};
-                const viceCaptain = players.find(player => player.isViceCaptain) || {};
+                // Get captain and vice-captain from settings
+                const captainName = results.settings.captain || 'Not selected';
+                const viceCaptainName = results.settings.viceCaptain || 'Not selected';
+                const captain = players.find(player => player.name === captainName) || {};
+                const viceCaptain = players.find(player => player.name === viceCaptainName) || {};
 
-                // Calculate total points
-                const totalPoints = players.reduce((sum, player) => sum + (player.points || 0), 0);
-
-                // Create team object
                 processedTeams = [{
                     id: '1',
                     name: 'Team 1',
                     initial: '1',
                     ...roleCounts,
-                    captain: captain.name || 'Not selected',
-                    captainStats: `${captain.points || 0} pts`,
+                    captain: captainName,
+                    captainStats: 'N/A', 
                     captainImage: captain.image || 'https://via.placeholder.com/40',
-                    viceCaptain: viceCaptain.name || 'Not selected',
-                    viceCaptainStats: `${viceCaptain.points || 0} pts`,
+                    viceCaptain: viceCaptainName,
+                    viceCaptainStats: 'N/A', 
                     viceCaptainImage: viceCaptain.image || 'https://via.placeholder.com/40',
-                    teamPoints: totalPoints,
+                    teamPoints: 'N/A', 
                     dtPlayers: players.length,
-                    zone: totalPoints > 1000 ? 'Winning' : totalPoints > 800 ? 'Competitive' : 'Chasing',
+                    zone: results.type || 'Balanced',
                     teamNumber: 1,
-                    teamId : results._id
+                    teamId: results._id,
+                    winRate: results.winRate || 'N/A' 
                 }];
             } else {
                 console.warn('No valid players array found in response.data.results');
@@ -84,11 +76,9 @@ const AiGeneratedTeams = () => {
         }
     };
 
-    // Handle copy team button press
     const handleCopyTeam = async () => {
         const playerJSON = players.map(player => JSON.stringify(player, null, 2)).join(',\n');
         await Clipboard.setStringAsync(playerJSON);
-        // console.log("Copied Player JSON:\n", playerJSON);
     };
 
     useEffect(() => {
@@ -151,13 +141,13 @@ const AiGeneratedTeams = () => {
                             </View>
                         </View>
                         <View style={styles.teamStats}>
-                            <Text style={styles.statLabel}>Points</Text>
-                            <Text style={styles.statValue}>{item.teamPoints}</Text>
+                            <Text style={styles.statLabel}>Win Rate</Text>
+                            <Text style={styles.statValue}>{item.winRate}%</Text>
                             <View style={styles.dtRow}>
                                 <Text style={styles.dtLabel}>DT Players</Text>
                                 <Text style={styles.dtLabel}>{item.dtPlayers}</Text>
                             </View>
-                            <Text style={styles.zoneText}>{item.zone} Zone</Text>
+                            <Text style={styles.zoneText}>{item.zone} Team</Text>
                         </View>
                     </View>
                 </LinearGradient>
@@ -184,7 +174,7 @@ const AiGeneratedTeams = () => {
             <FlatList
                 data={filteredTeams}
                 renderItem={renderTeamCard}
-                keyExtractor={(item) => item._id}
+                keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
             />
         </View>
@@ -193,7 +183,6 @@ const AiGeneratedTeams = () => {
 
 export default AiGeneratedTeams;
 
-// Styles remain unchanged
 const styles = StyleSheet.create({
     container: {
         padding: 16,

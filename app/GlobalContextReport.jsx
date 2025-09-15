@@ -52,7 +52,7 @@ export const GlobalProviderReport = ({ children }) => {
     try {
       const response = await axios.get(`http://192.168.1.159:3000/api/current-matches`,
       );
-      //console.log('Today Match Data:', response.data.matches);
+      // console.log('Current Matches:', response.data.matches);
       settodaymatches(response.data.matches);
     } catch (error) {
       console.error('Global failed:', error);

@@ -1,30 +1,25 @@
-import { StyleSheet, Text, View, Image, FlatList, ScrollView } from 'react-native';
-
-import React from 'react'
+import { StyleSheet, Text, View, FlatList } from 'react-native';
+import React from 'react';
 import MatchCard from '../MatchCard';
 
-const matches = [
-  {
-    id: '1',
-    teamA: 'Australia',
-    teamB: 'India',
-    matchDate: '2025-07-30T19:30:00.000Z',
-  }
-];
-const TestMatches = () => {
+const TestMatches = ({ data }) => {
   return (
     <View style={styles.container}>
-      <FlatList
-        data={matches}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <MatchCard match={item} />}
-        contentContainerStyle={styles.list}
-      />
+      {data.length === 0 ? (
+        <Text style={styles.noMatches}>No Test matches today</Text>
+      ) : (
+        <FlatList
+          data={data}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => <MatchCard match={item} />}
+          contentContainerStyle={styles.list}
+        />
+      )}
     </View>
-  )
-}
+  );
+};
 
-export default TestMatches
+export default TestMatches;
 
 const styles = StyleSheet.create({
   container: {
@@ -34,5 +29,11 @@ const styles = StyleSheet.create({
   },
   list: {
     paddingBottom: 20,
-  }
+  },
+  noMatches: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 20,
+  },
 });
