@@ -16,13 +16,13 @@ import ExpertTab from './ExpertTab';
 
 const renderScene = SceneMap({
     predictions: ({ route }) => <PredictionsTab onContentHeightChange={route.onContentHeightChange} />,
-    aiTeams: ({ route }) => <AiTeamsTab onContentHeightChange={route.onContentHeightChange} />,
+    aiTeams: ({ route }) => <AiTeamsTab onContentHeightChange={route.onContentHeightChange} matchID={route.matchID} />,
     lineupsTab: ({ route }) => <LineupsTab onContentHeightChange={route.onContentHeightChange} />,
     statsTab: ({ route }) => <StatsTab onContentHeightChange={route.onContentHeightChange} />,
     expertTab: ({ route }) => <ExpertTab onContentHeightChange={route.onContentHeightChange} />,
 });
 
-const HomeTabNav = () => {
+const HomeTabNav = ({ matchID }) => {
     const layout = useWindowDimensions();
     const [index, setIndex] = useState(0);
     const [initialLayout, setInitialLayout] = useState({ width: layout.width - 20 });
@@ -38,7 +38,7 @@ const HomeTabNav = () => {
 
     const routes = [
         { key: 'predictions', title: 'Predictions', onContentHeightChange: handleContentHeightChange },
-        { key: 'aiTeams', title: 'AI Teams', onContentHeightChange: handleContentHeightChange },
+        { key: 'aiTeams', title: 'AI Teams', onContentHeightChange: handleContentHeightChange, matchID: matchID },
         { key: 'lineupsTab', title: 'Lineups', onContentHeightChange: handleContentHeightChange },
         { key: 'statsTab', title: 'Stats', onContentHeightChange: handleContentHeightChange },
         { key: 'expertTab', title: 'Expert', onContentHeightChange: handleContentHeightChange },
@@ -115,7 +115,7 @@ const HomeTabNav = () => {
     };
 
     return (
-        <View style={[styles.container, { minHeight: contentHeight || 300 , marginTop : 40 }]}>
+        <View style={[styles.container, { minHeight: contentHeight || 300, marginTop: 40 }]}>
             {initialLayout.width > 0 && (
                 <TabView
                     navigationState={{ index, routes }}

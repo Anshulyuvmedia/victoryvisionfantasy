@@ -18,30 +18,6 @@ const MatchDetails = () => {
     const [recentForm, setrecentForm] = useState();
     const [headToHeadStats, setheadToHeadStats] = useState();
 
-    const FetchTeamPlayers = async () => {
-        try {
-            const response = await axios.get(
-                `https://rest.entitysport.com/v2/matches/${id}/squads?token=4bddfa07dfa4a83096c012b5be49ddf4`
-            );
-
-            // Log the response data in a more readable format
-            console.log("Players:", JSON.stringify(response.data, null, 2));
-
-            // Process the data if needed (e.g., update state)
-            if (response.data && response.data.response) {
-                const { teama, teamb } = response.data.response;
-                console.log("Team A Players : ",JSON.stringify(teama ? teama.squads: [],null,2));
-                // setmatchBannerData((prevData) => ({
-                //     ...prevData,
-                //     squadA: teama ? teama.squads : [],
-                //     squadB: teamb ? teamb.squads : [],
-                // }));
-            }
-        } catch (error) {
-            console.error("Error fetching Players:", error);
-            // Optional: Handle the error (e.g., set an error state)
-        }
-    };
 
     // Fetch Match Data here by matching ID..............
     useEffect(() => {
@@ -88,7 +64,6 @@ const MatchDetails = () => {
         };
 
         if (id) fetchMatchData();
-        FetchTeamPlayers();
     }, [id]);
 
     // Watch for updates in state
@@ -128,7 +103,7 @@ const MatchDetails = () => {
                         <HeadToHead headToHeadStats={headToHeadStats} />
                     </View>
                     <View style={styles.section}>
-                        <HomeTabNav />
+                        <HomeTabNav matchID={id} />
                     </View>
                 </ScrollView>
             </View>

@@ -1,29 +1,72 @@
 import { StyleSheet, Text, View, FlatList, Image, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Entypo from '@expo/vector-icons/Entypo';
 import images from '@/constants/images';
 
-const AiSafeTeam = () => {
+const AiSafeTeam = ({ teamData }) => {
     const [activeRole, setActiveRole] = useState('ALL'); // Default to show all players
 
-    const teamData = [
-        { id: '1', name: 'MS Dhoni', role: 'WK', score: '8.5cr', team: 'CSK', icon: images.wk, image: images.playerPlaceholder },
-        { id: '2', name: 'Virat Kohli', role: 'BAT', score: '9cr', team: 'RCB', icon: images.bat, image: images.playerPlaceholder },
-        { id: '3', name: 'Rohit Sharma', role: 'BAT', score: '8cr', team: 'MI', icon: images.bat, image: images.playerPlaceholder },
-        { id: '4', name: 'KL Rahul', role: 'BAT', score: '7.5cr', team: 'LSG', icon: images.bat, image: images.playerPlaceholder },
-        { id: '5', name: 'Suryakumar Yadav', role: 'BAT', score: '6.5cr', team: 'MI', icon: images.bat, image: images.playerPlaceholder },
-        { id: '6', name: 'Ravindra Jadeja', role: 'AR', score: '7cr', team: 'CSK', icon: images.ar, image: images.playerPlaceholder },
-        { id: '7', name: 'Hardik Pandya', role: 'AR', score: '6.5cr', team: 'MI', icon: images.ar, image: images.playerPlaceholder },
-        { id: '8', name: 'Jasprit Bumrah', role: 'BOW', score: '9cr', team: 'MI', icon: images.bow, image: images.playerPlaceholder },
-        { id: '9', name: 'Yuzvendra Chahal', role: 'BOW', score: '6cr', team: 'RR', icon: images.bow, image: images.playerPlaceholder },
-        { id: '10', name: 'Mohammed Shami', role: 'BOW', score: '6.5cr', team: 'GT', icon: images.bow, image: images.playerPlaceholder },
-        { id: '11', name: 'Arshdeep Singh', role: 'BOW', score: '5.5cr', team: 'PBKS', icon: images.bow, image: images.playerPlaceholder },
-    ];
+    // Map role to icon
+    const getRoleIcon = (role) => {
+        switch (role) {
+            case 'WK':
+                return images.wk;
+            case 'BAT':
+                return images.bat;
+            case 'ALL':
+                return images.ar;
+            case 'BOW':
+                return images.bow;
+            default:
+                return images.ar; // Fallback for unknown roles
+        }
+    };
 
-    const filteredData = activeRole === 'ALL' ? teamData : teamData.filter((item) => item.role === activeRole);
+    // Process teamData from props, handle missing data and duplicates
+    const processedTeamData = useMemo(() => {
+        if (!teamData || !teamData.players) return [];
+
+        // Remove duplicates based on _id
+        const uniquePlayers = [];
+        const seenIds = new Set();
+        teamData.players.forEach((player) => {
+            if (!seenIds.has(player._id) && player.name && player.role) {
+                seenIds.add(player._id);
+                uniquePlayers.push({
+                    id: player._id,
+                    name: player.name,
+                    role: player.role,
+                    score: player.credit ? `${player.credit}cr` : 'N/A',
+                    team: 'TBD',
+                    icon: getRoleIcon(player.role),
+                    image: images.playerPlaceholder,
+                    status: player.status || 'Unknown',
+                });
+            }
+        });
+
+        return uniquePlayers;
+    }, [teamData]);
+
+    // Calculate stats for tabs (WK, BAT, ALL, BOW counts and total credits)
+    const stats = useMemo(() => {
+        const roles = ['ALL', 'WK', 'BAT', 'BOW'];
+        return roles.map((role) => {
+            const players = processedTeamData.filter((p) => p.role === role);
+            const count = players.length;
+            const totalCredits = players.reduce((sum, p) => {
+                const credit = parseFloat(p.score) || 0;
+                return sum + credit;
+            }, 0);
+            return { role, count, totalCredits: totalCredits.toFixed(1) };
+        });
+    }, [processedTeamData]);
+
+    // Filter data based on active role
+    const filteredData = activeRole === 'ALL' ? processedTeamData : processedTeamData.filter((item) => item.role === activeRole);
 
     const handleTabPress = (role) => {
-        setActiveRole(activeRole === role ? 'ALL' : role); // Toggle to ALL if same role is clicked
+        setActiveRole(activeRole === role ? 'ALL' : role); 
     };
 
     const renderItem = ({ item }) => (
@@ -33,6 +76,12 @@ const AiSafeTeam = () => {
                 <View style={styles.playerheader}>
                     <View>
                         <Text style={styles.name}>{item.name}</Text>
+                        {teamData?.settings?.captain === item.name && (
+                            <Text style={styles.captainText}>(C)</Text>
+                        )}
+                        {teamData?.settings?.viceCaptain === item.name && (
+                            <Text style={styles.captainText}>(VC)</Text>
+                        )}
                     </View>
                     <View style={styles.roleContainer}>
                         <Text style={styles.roleText}>{item.role}</Text>
@@ -59,40 +108,23 @@ const AiSafeTeam = () => {
                     <Text style={styles.title}>Safe Team</Text>
                 </View>
                 <View style={styles.winRateBox}>
-                    <Text style={styles.winBox}>85% Win Rate</Text>
+                    <Text style={styles.winBox}>{teamData?.winRate ? `${teamData.winRate}% Win Rate` : 'N/A'}</Text>
                     <Text style={styles.subtitle}>Low Risk High Consistency</Text>
                 </View>
             </View>
             <View style={styles.stats}>
-                <TouchableOpacity
-                    style={[styles.tabBox, activeRole === 'WK' ? styles.activeTabBox : null]}
-                    onPress={() => handleTabPress('WK')}
-                >
-                    <Text style={[styles.tabTitle, activeRole === 'WK' ? styles.activetabTitle : null]}>WK (1)</Text>
-                    <Text style={styles.tabSubTitle}>8.5cr</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tabBox, activeRole === 'BAT' ? styles.activeTabBox : null]}
-                    onPress={() => handleTabPress('BAT')}
-                >
-                    <Text style={[styles.tabTitle, activeRole === 'BAT' ? styles.activetabTitle : null]}>BAT (4)</Text>
-                    <Text style={styles.tabSubTitle}>32cr</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tabBox, activeRole === 'AR' ? styles.activeTabBox : null]}
-                    onPress={() => handleTabPress('AR')}
-                >
-                    <Text style={[styles.tabTitle, activeRole === 'AR' ? styles.activetabTitle : null]}>AR (2)</Text>
-                    <Text style={styles.tabSubTitle}>18cr</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tabBox, activeRole === 'BOW' ? styles.activeTabBox : null]}
-                    onPress={() => handleTabPress('BOW')}
-                >
-                    <Text style={[styles.tabTitle, activeRole === 'BOW' ? styles.activetabTitle : null]}>BOW (4)</Text>
-                    <Text style={styles.blankText}> </Text>
-                    <Text style={styles.tabSubTitle}>41.5cr</Text>
-                </TouchableOpacity>
+                {stats.map(({ role, count, totalCredits }) => (
+                    <TouchableOpacity
+                        key={role}
+                        style={[styles.tabBox, activeRole === role ? styles.activeTabBox : null]}
+                        onPress={() => handleTabPress(role)}
+                    >
+                        <Text style={[styles.tabTitle, activeRole === role ? styles.activetabTitle : null]}>
+                            {role} ({count})
+                        </Text>
+                        <Text style={styles.tabSubTitle}>{totalCredits}cr</Text>
+                    </TouchableOpacity>
+                ))}
             </View>
             <View style={styles.boxTitle}>
                 <TouchableOpacity onPress={() => setActiveRole('ALL')}>
@@ -101,12 +133,16 @@ const AiSafeTeam = () => {
                     </Text>
                 </TouchableOpacity>
             </View>
-            <FlatList
-                data={filteredData}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false} // Disable FlatList scrolling to rely on parent TabView
-            />
+            {processedTeamData.length === 0 ? (
+                <Text style={styles.noDataText}>No team data available</Text>
+            ) : (
+                <FlatList
+                    data={filteredData}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item.id}
+                    scrollEnabled={false} // Disable FlatList scrolling to rely on parent TabView
+                />
+            )}
         </View>
     );
 };
@@ -140,7 +176,7 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     winRateBox: {
-        flexDirection: 'column', // Fixed typo from 'col'
+        flexDirection: 'column',
         justifyContent: 'flex-end',
         alignItems: 'flex-end',
     },
@@ -211,10 +247,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#333',
     },
+    captainText: {
+        fontSize: 12,
+        color: 'green',
+        fontWeight: 'bold',
+    },
     roleContainer: {
         padding: 5,
         borderRadius: 5,
-        // backgroundColor: '#f0f0f0',
     },
     roleText: {
         fontSize: 12,
@@ -256,5 +296,11 @@ const styles = StyleSheet.create({
     },
     blankText: {
         fontSize: 2,
+    },
+    noDataText: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginVertical: 20,
     },
 });
