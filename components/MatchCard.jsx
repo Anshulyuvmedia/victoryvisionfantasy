@@ -23,7 +23,7 @@ const MatchCard = ({ match }) => {
     return (
         <TouchableOpacity
             style={styles.card}
-            onPress={() => router.push(`/matchdetails/${match._id}`)}
+            onPress={() => router.push(`/matchdetails/${match.matchId}`)}
         >
             <Text style={styles.matchTitle}>{match.shortTitle}</Text>
             <View style={styles.teamsRow}>

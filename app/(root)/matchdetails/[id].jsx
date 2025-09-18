@@ -13,37 +13,93 @@ import { useLocalSearchParams } from 'expo-router';
 
 const MatchDetails = () => {
     const { id } = useLocalSearchParams();
-    const [matchId, setmatchId] = useState(id);
     const [matchBannerData, setmatchBannerData] = useState();
     const [winprobdata, setwinprobdata] = useState();
     const [recentForm, setrecentForm] = useState();
     const [headToHeadStats, setheadToHeadStats] = useState();
 
+    const FetchTeamPlayers = async () => {
+        try {
+            const response = await axios.get(
+                `https://rest.entitysport.com/v2/matches/${id}/squads?token=4bddfa07dfa4a83096c012b5be49ddf4`
+            );
+
+            // Log the response data in a more readable format
+            console.log("Players:", JSON.stringify(response.data, null, 2));
+
+            // Process the data if needed (e.g., update state)
+            if (response.data && response.data.response) {
+                const { teama, teamb } = response.data.response;
+                console.log("Team A Players : ",JSON.stringify(teama ? teama.squads: [],null,2));
+                // setmatchBannerData((prevData) => ({
+                //     ...prevData,
+                //     squadA: teama ? teama.squads : [],
+                //     squadB: teamb ? teamb.squads : [],
+                // }));
+            }
+        } catch (error) {
+            console.error("Error fetching Players:", error);
+            // Optional: Handle the error (e.g., set an error state)
+        }
+    };
+
     // Fetch Match Data here by matching ID..............
     useEffect(() => {
         const fetchMatchData = async () => {
             try {
-                const response = await axios.get(`http://192.168.1.159:3000/api/match-details`, {
-                    params: { matchId }
-                });
-                // console.log("Win prob",response.data.match);
-                if (response && response.data && response.data.match) {
-                    const { venue, weatherReport, matchDate } = response.data.match;
-                    const { winProbability,teamA, teamB,pitchReport } = response.data.match;
-                    const {recentForm } = response.data.match;
-                    const { headToHeadStats } = response.data.match;
-                    setmatchBannerData({ venue, weatherReport, matchDate });
-                    setwinprobdata({ winProbability,teamA, teamB, pitchReport });
-                    setrecentForm({ recentForm });
-                    setheadToHeadStats({ headToHeadStats,teamA, teamB });
-                    console.log(matchBannerData);
+                const response = await axios.get(
+                    `http://192.168.1.159:3000/api/match-details`,
+                    { params: { id } }
+                );
+
+                console.log("API raw:", JSON.stringify(response.data, null, 2));
+
+                // API returns { match: [ ... ] }
+                const match = response.data.match?.[0];
+                if (!match) {
+                    console.warn("No match found in API response");
+                    return;
                 }
+
+                const { venue, matchDate, match_number, teamA, teamB, formatStr, shortTitle, title } = match;
+
+                const bannerData = {
+                    venue: venue?.name ?? "N/A",
+                    weatherReport: null,
+                    formatStr: formatStr ?? null,
+                    shortTitle: shortTitle ?? null,
+                    title: title ?? null,
+                    matchDate: matchDate ?? null,
+                    match_number: match_number ?? null,
+                    teamA: {
+                        name: teamA?.name ?? "N/A",
+                        logo: teamA?.logo ?? null,
+                    },
+                    teamB: {
+                        name: teamB?.name ?? "N/A",
+                        logo: teamB?.logo ?? null,
+                    },
+                };
+
+                setmatchBannerData(bannerData);
             } catch (error) {
-                console.error('Error fetching Match data:', error);
+                console.error("Error fetching Match data:", error);
             }
         };
-        fetchMatchData();
-    }, []);
+
+        if (id) fetchMatchData();
+        FetchTeamPlayers();
+    }, [id]);
+
+    // Watch for updates in state
+    useEffect(() => {
+        // if (matchBannerData) {
+        //     console.log("matchBannerData updated:", matchBannerData);
+        // }
+    }, [matchBannerData]);
+
+
+
     return (
         <View style={styles.safeArea}>
             <View style={styles.container}>
@@ -56,12 +112,18 @@ const MatchDetails = () => {
                     <View style={styles.section}>
                         <MatchBanner matchBannerData={matchBannerData} />
                     </View>
-                    <View style={styles.section}>
-                        <WinProbability winprobdata={winprobdata} />
-                    </View>
-                    <View style={styles.section}>
-                        <RecentForm recentForm={recentForm} />
-                    </View>
+                    {false && (
+                        <View style={styles.section}>
+                            <WinProbability winprobdata={winprobdata} />
+                        </View>
+                    )}
+
+                    {false && (
+                        <View style={styles.section}>
+                            <RecentForm recentForm={recentForm} />
+                        </View>
+                    )}
+
                     <View style={styles.section}>
                         <HeadToHead headToHeadStats={headToHeadStats} />
                     </View>
@@ -91,6 +153,6 @@ const styles = StyleSheet.create({
         paddingBottom: 40,
     },
     section: {
-        // marginBottom: 5,
+        // marginTop: 5,
     },
 });

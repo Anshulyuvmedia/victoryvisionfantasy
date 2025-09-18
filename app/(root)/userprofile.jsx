@@ -41,6 +41,7 @@ const UserProfile = () => {
     const handleLogout = async () => {
         try {
             await AsyncStorage.removeItem('userData');
+            await AsyncStorage.removeItem('userToken');
             router.replace('/login'); // Navigate to login screen
         } catch (error) {
             console.error('Error during logout:', error);

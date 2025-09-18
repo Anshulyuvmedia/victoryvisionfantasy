@@ -18,9 +18,9 @@ const AiTeamsTab = ({ onContentHeightChange }) => {
     return (
         <View style={styles.container}>
             <View style={styles.contentContainer} onLayout={handleLayout}>
-                <View style={styles.section}>
+                {/* <View style={styles.section}>
                     <Aiteamconfig />
-                </View>
+                </View> */}
                 <View style={styles.section}>
                     <AiSafeTeam />
                 </View>

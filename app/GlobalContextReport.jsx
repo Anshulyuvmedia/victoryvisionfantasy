@@ -28,7 +28,6 @@ export const GlobalProviderReport = ({ children }) => {
     }
   };
 
-
   const fetchNotifications = async () => {
     const storedData = await AsyncStorage.getItem('userData');
     const parsedData = storedData ? JSON.parse(storedData) : {};
@@ -52,7 +51,7 @@ export const GlobalProviderReport = ({ children }) => {
     try {
       const response = await axios.get(`http://192.168.1.159:3000/api/current-matches`,
       );
-      // console.log('Current Matches:', response.data.matches);
+      //console.log('Current Matches:', response.data.matches);
       settodaymatches(response.data.matches);
     } catch (error) {
       console.error('Global failed:', error);

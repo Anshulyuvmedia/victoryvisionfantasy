@@ -1,5 +1,5 @@
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, Image } from 'react-native';
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { moderateScale, verticalScale, scale } from 'react-native-size-matters';
@@ -15,9 +15,10 @@ const LoginScreen = () => {
     const [isOtpSent, setIsOtpSent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [userdata, setuserdata] = useState(false);
-     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const generateOtp = async () => {
+        // console.log(phoneNumber);
         if (!phoneNumber || phoneNumber.length !== 10) {
             Alert.alert('Error', 'Please enter a valid 10-digit phone number.');
             return;
@@ -52,7 +53,7 @@ const LoginScreen = () => {
                 phoneNumber,
                 otp,
             });
-            
+
             if (response.data.status == true) {
                 // console.log("USER DATA : ",response.data.userdata);
                 setuserdata(response.data.userdata);
@@ -85,7 +86,9 @@ const LoginScreen = () => {
             try {
                 const token = await AsyncStorage.getItem('userToken');
                 // console.log("userToken : ", token);
-                router.push('/(root)/');
+                if (token) {
+                    router.push('/(root)/');
+                }
             } catch (error) {
                 console.error('Error checking auth state:', error);
             }

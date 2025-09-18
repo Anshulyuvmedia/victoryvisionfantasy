@@ -115,7 +115,7 @@ const HomeTabNav = () => {
     };
 
     return (
-        <View style={[styles.container, { minHeight: contentHeight || 300 }]}>
+        <View style={[styles.container, { minHeight: contentHeight || 300 , marginTop : 40 }]}>
             {initialLayout.width > 0 && (
                 <TabView
                     navigationState={{ index, routes }}
