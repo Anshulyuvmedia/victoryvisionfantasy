@@ -4,8 +4,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import axios from 'axios';
 
 
-const PredictionsTab = ({ onContentHeightChange }) => {
-    const [matchId, setmatchId] = useState('687e09aa6e6c3fecda45bb65');
+const PredictionsTab = ({ onContentHeightChange ,matchID }) => {
+    const [matchId, setmatchId] = useState('');
     const [apiData, setapiData] = useState({});
 
     const handleLayout = useCallback(
@@ -20,10 +20,10 @@ const PredictionsTab = ({ onContentHeightChange }) => {
 
     // Fetch Match Predictions Data here by matching  Match ID..............
     useEffect(() => {
-        const fetchMatchPredictions = async () => {
+        const fetchMatchPredictions = async (matchID) => {
             try {
                 const response = await axios.get(`http://192.168.1.159:3000/api/get-matchprediction`, {
-                    params: { matchId }
+                    params: { matchID }
                 });
                 // console.log(`Response: ${JSON.stringify(response.data, null, 2)}`);
                 if (response && response.data) {
@@ -33,7 +33,7 @@ const PredictionsTab = ({ onContentHeightChange }) => {
                 console.error('Error fetching Match Predictions data:', error);
             }
         };
-        fetchMatchPredictions();
+        fetchMatchPredictions(matchID);
     }, []);
     return (
         <View style={styles.container} onLayout={handleLayout}>

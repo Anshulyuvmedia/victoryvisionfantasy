@@ -17,7 +17,7 @@ const MatchBanner = ({ matchBannerData }) => {
                 resizeMode="contain"
             >
                 <View style={styles.header}>
-                    <Text style={styles.matchNo}>Match No: {matchBannerData?.match_number}</Text>
+                    <Text style={styles.matchNo}>Match No: {matchBannerData?.match_number || '-'}</Text>
                     <Text style={styles.time}>{matchTime}</Text>
                     <Text style={styles.countdown}> {matchBannerData?.formatStr}</Text>
                 </View>

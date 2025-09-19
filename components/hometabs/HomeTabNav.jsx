@@ -15,11 +15,11 @@ import StatsTab from './StatsTab';
 import ExpertTab from './ExpertTab';
 
 const renderScene = SceneMap({
-    predictions: ({ route }) => <PredictionsTab onContentHeightChange={route.onContentHeightChange} />,
+    predictions: ({ route }) => <PredictionsTab onContentHeightChange={route.onContentHeightChange} matchID={route.matchID} />,
     aiTeams: ({ route }) => <AiTeamsTab onContentHeightChange={route.onContentHeightChange} matchID={route.matchID} />,
-    lineupsTab: ({ route }) => <LineupsTab onContentHeightChange={route.onContentHeightChange} />,
-    statsTab: ({ route }) => <StatsTab onContentHeightChange={route.onContentHeightChange} />,
-    expertTab: ({ route }) => <ExpertTab onContentHeightChange={route.onContentHeightChange} />,
+    lineupsTab: ({ route }) => <LineupsTab onContentHeightChange={route.onContentHeightChange} matchID={route.matchID} />,
+    // statsTab: ({ route }) => <StatsTab onContentHeightChange={route.onContentHeightChange} />,
+    // expertTab: ({ route }) => <ExpertTab onContentHeightChange={route.onContentHeightChange} />,
 });
 
 const HomeTabNav = ({ matchID }) => {
@@ -37,11 +37,11 @@ const HomeTabNav = ({ matchID }) => {
     };
 
     const routes = [
-        { key: 'predictions', title: 'Predictions', onContentHeightChange: handleContentHeightChange },
+        { key: 'predictions', title: 'Predictions', onContentHeightChange: handleContentHeightChange, matchID: matchID },
         { key: 'aiTeams', title: 'AI Teams', onContentHeightChange: handleContentHeightChange, matchID: matchID },
-        { key: 'lineupsTab', title: 'Lineups', onContentHeightChange: handleContentHeightChange },
-        { key: 'statsTab', title: 'Stats', onContentHeightChange: handleContentHeightChange },
-        { key: 'expertTab', title: 'Expert', onContentHeightChange: handleContentHeightChange },
+        { key: 'lineupsTab', title: 'Lineups', onContentHeightChange: handleContentHeightChange, matchID: matchID },
+        // { key: 'statsTab', title: 'Stats', onContentHeightChange: handleContentHeightChange },
+        // { key: 'expertTab', title: 'Expert', onContentHeightChange: handleContentHeightChange },
     ];
 
     const renderTabBar = (props) => {

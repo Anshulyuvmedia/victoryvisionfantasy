@@ -66,12 +66,15 @@ const AiSafeTeam = ({ teamData }) => {
     const filteredData = activeRole === 'ALL' ? processedTeamData : processedTeamData.filter((item) => item.role === activeRole);
 
     const handleTabPress = (role) => {
-        setActiveRole(activeRole === role ? 'ALL' : role); 
+        setActiveRole(activeRole === role ? 'ALL' : role);
     };
 
     const renderItem = ({ item }) => (
         <View style={styles.playerContainer}>
-            <Image source={item.image} style={styles.playerImage} />
+            <View style={styles.playerIconBox}>
+                {/* <Image source={item.icon} style={styles.playerIcon} resizeMode="contain" /> */}
+                <Image source={item.icon} style={styles.playerImage} resizeMode="contain" />
+            </View>
             <View style={styles.playerInfo}>
                 <View style={styles.playerheader}>
                     <View>
@@ -91,9 +94,6 @@ const AiSafeTeam = ({ teamData }) => {
                     <View>
                         <Text style={styles.scoreText}>{item.score}</Text>
                         <Text style={styles.teamText}>{item.team}</Text>
-                    </View>
-                    <View style={styles.playerIconBox}>
-                        <Image source={item.icon} style={styles.playerIcon} resizeMode="contain" />
                     </View>
                 </View>
             </View>
@@ -220,12 +220,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#d8fae3',
     },
     playerImage: {
-        width: 60,
-        height: 60,
+        width: 40,
+        height: 40,
         borderRadius: 10,
         borderWidth: 1,
-        borderColor: '#96e6b0',
-        backgroundColor: '#96e6b0',
+        borderColor: '#ffffffff',
+        // backgroundColor: '#96e6b0',
     },
     playerIconBox: {
         borderRadius: 10,
@@ -255,10 +255,12 @@ const styles = StyleSheet.create({
     roleContainer: {
         padding: 5,
         borderRadius: 5,
+        justifyContent: 'center',
     },
     roleText: {
-        fontSize: 12,
+        fontSize: 13,
         color: '#333',
+        fontWeight: 600,
     },
     scoreText: {
         fontSize: 14,

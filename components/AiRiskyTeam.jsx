@@ -71,7 +71,9 @@ const AiRiskyTeam = ({ teamData }) => {
 
     const renderItem = ({ item }) => (
         <View style={styles.playerContainer}>
-            <Image source={item.image} style={styles.playerImage} />
+            <View style={styles.playerIconBox}>
+                <Image source={item.icon} style={styles.playerImage} resizeMode="contain" />
+            </View>
             <View style={styles.playerInfo}>
                 <View style={styles.playerheader}>
                     <View style={styles.nameContainer}>
@@ -91,9 +93,6 @@ const AiRiskyTeam = ({ teamData }) => {
                     <View>
                         <Text style={styles.scoreText}>{item.score}</Text>
                         <Text style={styles.teamText}>{item.team}</Text>
-                    </View>
-                    <View style={styles.playerIconBox}>
-                        <Image source={item.icon} style={styles.playerIcon} resizeMode="contain" />
                     </View>
                 </View>
             </View>
@@ -224,12 +223,12 @@ const styles = StyleSheet.create({
         backgroundColor: '#ffe1bc',
     },
     playerImage: {
-        width: 60,
-        height: 60,
+        width: 40,
+        height: 40,
         borderRadius: 10,
         borderWidth: 1,
-        borderColor: '#ffc377',
-        backgroundColor: '#ffc377',
+        borderColor: '#ffffffff',
+        // backgroundColor: '#ffc377',
     },
     playerIconBox: {
         borderRadius: 10,
@@ -263,8 +262,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f0f0',
     },
     roleText: {
-        fontSize: 12,
+        fontSize: 13,
         color: '#333',
+        fontWeight: 600,
     },
     scoreText: {
         fontSize: 14,
