@@ -62,32 +62,19 @@ const FantasyTracker = () => {
             type: file.mimeType || 'image/jpeg',
         });
         formData.append('userId', parsedData.userid);
-        formData.append('matchId', '687e09aa6e6c3fecda45bb65');
-        formData.append('strongPoints', 'S Dube is in great form and expected to perform well.M Siraj has delivered crucial performances in key moments and maintains a high fantasy points average.');
-        formData.append('analysis', JSON.stringify({
-            "Team Strength": "77%",
-            "Winning Chance": "85%",
-            "Best Captain": "MS Dhoni or V Kohli",
-            "Projected Points (Captain)": 250,
-            "Best Vice Captain": "R Jadeja or S Gill",
-            "Projected Points (Vice Captain)": 220
-        }));
 
         try {
             const response = await axios.post(
                 'http://192.168.1.159:3000/api/insert-fantasy-points',
                 formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                }
+                { headers: { 'Content-Type': 'multipart/form-data' } }
             );
-            console.log('Upload success:', response.data.dataid);
+            console.log("Upload success:", response.data);
             setisLoading(false);
-            setAnalysisData(response.data.dataid);
+            setAnalysisData(response.data);
         } catch (error) {
-            console.error('Upload failed:', error);
+            console.error("Upload failed:", error);
+            setisLoading(false);
         }
     };
 

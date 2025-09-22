@@ -28,7 +28,7 @@ const MatchDetails = () => {
                     { params: { id } }
                 );
 
-                console.log("API raw:", JSON.stringify(response.data, null, 2));
+                //console.log("API raw:", JSON.stringify(response.data, null, 2));
 
                 // API returns { match: [ ... ] }
                 const match = response.data.match?.[0];
