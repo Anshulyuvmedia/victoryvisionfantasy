@@ -29,7 +29,7 @@ const AiTeamsTab = ({ onContentHeightChange, matchID }) => {
             if (response.data.status && response.data.results) {
                 const safeTeam = response.data.results.find((team) => team.type === 'Safe') || null;
                 const riskyTeam = response.data.results.find((team) => team.type === 'Risky') || null;
-                console.log("riskyTeam : ",JSON.stringify(riskyTeam,null,2));
+                console.log("riskyTeam : ", JSON.stringify(riskyTeam, null, 2));
                 setTeams({ safeTeam, riskyTeam });
             } else {
                 console.warn('No valid data in API response');

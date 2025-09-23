@@ -1,20 +1,22 @@
 import { StyleSheet, Text, View, Switch, TouchableOpacity, ScrollView } from 'react-native'
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { GlobalContextReport } from '../app/GlobalContextReport';
+
 
 const Aiteamconfig = () => {
+    const { todaymatches } = useContext(GlobalContextReport);
     const [autoPickCaptain, setAutoPickCaptain] = useState(false)
     const [autoPickViceCaptain, setAutoPickViceCaptain] = useState(false)
-    const [lockStarPlayers, setLockStarPlayers] = useState(false)
-    const [avoidInjuryProne, setAvoidInjuryProne] = useState(false)
-    const [numTeams, setNumTeams] = useState('3 Teams')
+    // const [lockStarPlayers, setLockStarPlayers] = useState(false)
+    // const [avoidInjuryProne, setAvoidInjuryProne] = useState(false)
+    const [selectedMatchId, setSelectedMatchId] = useState(null)
     const [contestType, setContestType] = useState('Grand League')
     const [riskLevel, setRiskLevel] = useState('Balanced')
-    const teamOptions = ['1 Team', '3 Teams', '5 Teams', '10 Teams']
-    const contestOptions = ['Grand League', 'Head-to-Head', '50-50', 'Multi-Entry']
+    const contestOptions = ['T20I', 'ODI', 'Test Matches']
     const [authUser, setauthUser] = useState({});
 
     useEffect(() => {
@@ -24,7 +26,11 @@ const Aiteamconfig = () => {
             setauthUser(storedData);
         };
         fetchUserData();
-    }, []);
+        //It will set Id of already selected Match
+        if (todaymatches && todaymatches.length > 0) {
+            setSelectedMatchId(todaymatches[0].matchId);
+        }
+    }, [todaymatches]);
 
 
     const generateAiTeams = async () => {
@@ -34,12 +40,12 @@ const Aiteamconfig = () => {
         formData.append('userId', parsedData.userid);
         formData.append('autoPickCaptain', autoPickCaptain);
         formData.append('autoPickViceCaptain', autoPickViceCaptain);
-        formData.append('lockStarPlayers', lockStarPlayers);
-        formData.append('avoidInjuryProne', avoidInjuryProne);
-        formData.append('numTeams', numTeams);
+        // formData.append('lockStarPlayers', lockStarPlayers);
+        // formData.append('avoidInjuryProne', avoidInjuryProne);
+        formData.append('selectedMatchId', selectedMatchId);
         formData.append('contestType', contestType);
         formData.append('riskLevel', riskLevel);
-        console.log('Form Data:',formData);
+        // console.log('Form Data:', formData);
 
         try {
             const response = await axios.post(
@@ -54,7 +60,7 @@ const Aiteamconfig = () => {
             console.log('Upload success');
         } catch (error) {
             console.error('Upload failed:', error);
-        }
+        } c
     };
     return (
         <View style={styles.container}>
@@ -79,7 +85,7 @@ const Aiteamconfig = () => {
                 />
             </View>
 
-            <View style={styles.row}>
+            {/* <View style={styles.row}>
                 <Text style={styles.optiontitle}>Lock Star Players</Text>
                 <Switch
                     onValueChange={setLockStarPlayers}
@@ -93,23 +99,28 @@ const Aiteamconfig = () => {
                     onValueChange={setAvoidInjuryProne}
                     value={avoidInjuryProne}
                 />
-            </View>
+            </View> */}
 
             <View style={styles.row}>
                 <View style={styles.col}>
-                    <Text style={styles.optiontitle}>Number of Teams</Text>
+                    <Text style={styles.optiontitle}>Select Match</Text>
                     <View style={styles.dropdown}>
                         <Picker
-                            selectedValue={numTeams}
-                            onValueChange={(itemValue) => setNumTeams(itemValue)}
+                            selectedValue={selectedMatchId}
+                            onValueChange={(itemValue) => setSelectedMatchId(itemValue)}
                             style={styles.picker}
                         >
-                            {teamOptions.map((option) => (
-                                <Picker.Item key={option} label={option} value={option} />
+                            {todaymatches.map((option) => (
+                                <Picker.Item
+                                    key={option.matchId}
+                                    label={option.title}
+                                    value={option.matchId}
+                                />
                             ))}
                         </Picker>
                     </View>
                 </View>
+
 
                 <View style={styles.col}>
                     <Text style={styles.optiontitle}>Contest Type</Text>
@@ -185,6 +196,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 12,
+        marginTop: 6,
     },
     col: {
         flexDirection: 'column',
@@ -217,6 +229,7 @@ const styles = StyleSheet.create({
     picker: {
         // height: 50,
         width: '100%',
+        color: '#ergba(0, 0, 0, 1)'
     },
     riskContainer: {
         marginBottom: 16,
