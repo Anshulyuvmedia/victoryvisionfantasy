@@ -21,7 +21,7 @@ const AiTeamsTab = ({ onContentHeightChange, matchID }) => {
     // Fetch AI-generated teams
     const fetchGeneratedAiTeams = async (matchID) => {
         try {
-            const response = await axios.get(`http://192.168.1.159:3000/api/get-ai-teams`, {
+            const response = await axios.get(`http://13.203.214.179:3000/api/get-ai-teams`, {
                 params: { matchID },
             });
             // console.log('API Response:', response.data);

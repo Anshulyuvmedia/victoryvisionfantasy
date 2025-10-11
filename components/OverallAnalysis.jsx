@@ -12,7 +12,7 @@ const OverallAnalysis = ({ analysisId }) => {
 
     const fetchAnalysis = async () => {
         try {
-            const response = await axios.get(`http://192.168.1.159:3000/api/analysis-result`, {
+            const response = await axios.get(`http://13.203.214.179:3000/api/analysis-result`, {
                 params: { analysisId }
             });
             console.log('Analysis Success:', response.data);

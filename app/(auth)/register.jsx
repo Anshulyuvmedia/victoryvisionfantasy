@@ -23,7 +23,7 @@ const RegisterScreen = () => {
 
     const handleRegister = async () => {
         try {
-            const response = await axios.post('http://192.168.1.159:3000/api/createUser', {
+            const response = await axios.post('http://13.203.214.179:3000/api/createUser', {
                 name,
                 email,
                 phoneNumber

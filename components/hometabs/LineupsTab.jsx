@@ -19,7 +19,7 @@ const LineupsTab = ({ onContentHeightChange, matchID }) => {
 
     const fetchTeamPlayers = async (matchID) => {
         try {
-            const response = await axios.get(`http://192.168.1.159:3000/api/team-players`, {
+            const response = await axios.get(`http://13.203.214.179:3000/api/team-players`, {
                 params: { matchID },
             });
             const data = response.data.results[0];

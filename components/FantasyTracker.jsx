@@ -65,7 +65,7 @@ const FantasyTracker = () => {
 
         try {
             const response = await axios.post(
-                'http://192.168.1.159:3000/api/insert-fantasy-points',
+                'http://13.203.214.179:3000/api/insert-fantasy-points',
                 formData,
                 { headers: { 'Content-Type': 'multipart/form-data' } }
             );

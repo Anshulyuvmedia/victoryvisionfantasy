@@ -16,7 +16,7 @@ export const GlobalProviderReport = ({ children }) => {
     // console.log("GLOBAL USER userid :", userid);
 
     try {
-      const response = await axios.get(`http://192.168.1.159:3000/api/get-reports`, {
+      const response = await axios.get(`http://13.203.214.179:3000/api/get-reports`, {
         params: { userid }
       });
 
@@ -35,7 +35,7 @@ export const GlobalProviderReport = ({ children }) => {
     // console.log("GLOBAL USER userid :", userid);
 
     try {
-      const response = await axios.get(`http://192.168.1.159:3000/api/get-notifications`, {
+      const response = await axios.get(`http://13.203.214.179:3000/api/get-notifications`, {
         params: { userid }
       });
 
@@ -49,9 +49,9 @@ export const GlobalProviderReport = ({ children }) => {
 
   const fetchCurrentMatches = async () => {
     try {
-      const response = await axios.get(`http://192.168.1.159:3000/api/current-matches`,
+      const response = await axios.get(`http://13.203.214.179:3000/api/current-matches`,
       );
-      //console.log('Current Matches:', response.data.matches);
+      console.log('Current Matches:', response.data.matches);
       settodaymatches(response.data.matches);
     } catch (error) {
       console.error('Global failed:', error);
