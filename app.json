@@ -8,6 +8,7 @@
     "scheme": "victoryvision",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "jsEngine": "hermes",
     "splash": {
       "image": "./assets/images/vvlogo.png",
       "resizeMode": "contain",
