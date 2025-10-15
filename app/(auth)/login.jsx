@@ -25,14 +25,14 @@ const LoginScreen = () => {
         }
         setIsLoading(true);
         try {
-            const response = await axios.post(`http://13.203.214.179:3000/api/generateOtp`, { phoneNumber });
+            const response = await axios.post(`http://api.victoryvision.live:3000/api/generateOtp`, { phoneNumber });
             const otpValue = response.data.otp;
             setGeneratedOtp(otpValue); // You can hide this in prod
             setIsOtpSent(true);
 
         } catch (error) {
             console.error('Generate OTP error:', error.message);
-            Alert.alert('Error', 'Failed to generate OTP.');
+            Alert.alert('Error', 'Failed to generate OTP.',error.message);
         }
         setIsLoading(false);
     };
@@ -49,7 +49,7 @@ const LoginScreen = () => {
 
         setIsLoading(true);
         try {
-            const response = await axios.post(`http://13.203.214.179:3000/api/verifyOtp`, {
+            const response = await axios.post(`http://api.victoryvision.live:3000/api/verifyOtp`, {
                 phoneNumber,
                 otp,
             });
@@ -108,10 +108,11 @@ const LoginScreen = () => {
             </View>
             <Text style={styles.title}>Login with Phone</Text>
 
-            {/* Phone Number Input */}
+            {/* /* Phone Number Input */}
             <TextInput
                 style={styles.input}
                 placeholder="Enter Phone Number"
+                placeholderTextColor="#666"
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
                 keyboardType="phone-pad"

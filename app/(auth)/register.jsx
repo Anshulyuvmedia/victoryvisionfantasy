@@ -23,22 +23,44 @@ const RegisterScreen = () => {
 
     const handleRegister = async () => {
         try {
-            const response = await axios.post('http://13.203.214.179:3000/api/createUser', {
+            setIsLoading(true);
+
+            const response = await axios.post('http://api.victoryvision.live:3000/api/createUser', {
                 name,
                 email,
-                phoneNumber
+                phoneNumber,
             });
-            if (response.status === 200) {
+
+            if (response.status === 201) {
                 Alert.alert('Success', 'User registered successfully!');
-                setIsLoading(false);
             } else {
-                Alert.alert('Error', 'Registration failed');
+                Alert.alert('Error', 'Unexpected response from server.');
             }
         } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Something went wrong');
+            console.error('Registration error:', error);
+
+            if (error.response) {
+                const { status, data } = error.response;
+
+                // 🧩 Handle specific backend responses
+                if (status === 409) {
+                    Alert.alert('User Already Exists', data.msg || 'This email or phone number is already registered.');
+                } else if (status === 400) {
+                    Alert.alert('Missing Fields', data.msg || 'Please fill all required fields.');
+                } else if (status === 500) {
+                    Alert.alert('Server Error', 'Something went wrong on the server. Please try again later.');
+                } else {
+                    Alert.alert('Error', data.msg || 'Something went wrong. Please try again.');
+                }
+            } else {
+                // 🧠 No response (network error, timeout, etc.)
+                Alert.alert('Network Error', 'Could not reach the server. Please check your internet connection.');
+            }
+        } finally {
+            setIsLoading(false);
         }
     };
+    
 
     return (
         <View style={styles.container}>
@@ -49,6 +71,7 @@ const RegisterScreen = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Enter Your Name"
+                placeholderTextColor="#666"
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -59,6 +82,7 @@ const RegisterScreen = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Enter Phone Number (e.g., 9876543210)"
+                placeholderTextColor="#666"
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
                 keyboardType="phone-pad"
@@ -69,6 +93,7 @@ const RegisterScreen = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Enter Email"
+                placeholderTextColor="#666"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"

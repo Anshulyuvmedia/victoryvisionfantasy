@@ -75,7 +75,7 @@ const playerlist = () => {
     const fetchAllTeamMembers = async () => {
         try {
             setIsLoading(true);
-            const response = await axios.get(`http://13.203.214.179:3000/api/get-ai-teams`, {
+            const response = await axios.get(`http://api.victoryvision.live:3000/api/get-ai-teams`, {
                 params: { id },
             });
             // console.log('Team Data:', JSON.stringify(response.data, null, 2));

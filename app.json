@@ -4,18 +4,18 @@
     "slug": "victoryvision",
     "version": "1.0.0",
     "orientation": "portrait",
+    "jsEngine": "hermes",
     "icon": "./assets/images/applogo.png",
     "scheme": "victoryvision",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "jsEngine": "hermes",
     "splash": {
       "image": "./assets/images/vvlogo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "extra": {
-      "API_URL": "http://13.203.214.179:3000",
+      "API_URL": "http://api.victoryvision.live:3000",
       "router": {},
       "eas": {
         "projectId": "0fea2570-615e-47dc-bc13-6b7189f13e8f"
@@ -29,6 +29,7 @@
         "foregroundImage": "./assets/images/applogo.png",
         "backgroundColor": "#ffffff"
       },
+      "usesCleartextTraffic": true,
       "edgeToEdgeEnabled": true,
       "package": "com.victory.vision"
     },

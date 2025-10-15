@@ -24,7 +24,7 @@ const MatchDetails = () => {
         const fetchMatchData = async () => {
             try {
                 const response = await axios.get(
-                    `http://13.203.214.179:3000/api/match-details`,
+                    `http://api.victoryvision.live:3000/api/match-details`,
                     { params: { id } }
                 );
 
