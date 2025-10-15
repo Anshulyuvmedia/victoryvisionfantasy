@@ -21,10 +21,10 @@ const AiTeamsTab = ({ onContentHeightChange, matchID }) => {
     // Fetch AI-generated teams
     const fetchGeneratedAiTeams = async (matchID) => {
         try {
-            const response = await axios.get(`http://api.victoryvision.live:3000/api/get-ai-teams`, {
+            const response = await axios.get(`https://api.victoryvision.live/api/get-ai-teams`, {
                 params: { matchID },
             });
-            // console.log('API Response:', response.data);
+            console.log('API Response:', response.data);
 
             if (response.data.status && response.data.results) {
                 const safeTeam = response.data.results.find((team) => team.type === 'Safe') || null;

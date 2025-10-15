@@ -49,7 +49,7 @@ const Aiteamconfig = () => {
 
         try {
             const response = await axios.post(
-                'http://api.victoryvision.live:3000/api/insert-aiteam',
+                'https://api.victoryvision.live/api/insert-aiteam',
                 formData,
                 {
                     headers: {

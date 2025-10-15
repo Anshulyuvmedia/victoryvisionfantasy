@@ -9,7 +9,7 @@ const HomeScreen = () => {
     // useEffect(() => {
     //     const fetchMatchData = async () => {
     //         try {
-    //             const response = await axios.get(`http://api.victoryvision.live:3000/api/match-details`, {
+    //             const response = await axios.get(`https://api.victoryvision.live/api/match-details`, {
     //                 params: { matchId }
     //             });
     //             // console.log("Win prob",response.data.match);

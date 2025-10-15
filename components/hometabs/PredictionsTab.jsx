@@ -22,7 +22,7 @@ const PredictionsTab = ({ onContentHeightChange ,matchID }) => {
     useEffect(() => {
         const fetchMatchPredictions = async (matchID) => {
             try {
-                const response = await axios.get(`http://api.victoryvision.live:3000/api/get-matchprediction`, {
+                const response = await axios.get(`https://api.victoryvision.live/api/get-matchprediction`, {
                     params: { matchID }
                 });
                 // console.log(`Response: ${JSON.stringify(response.data, null, 2)}`);

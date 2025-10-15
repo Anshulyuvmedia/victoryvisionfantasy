@@ -8,7 +8,7 @@ const PerformanceSummery = () => {
     const { apiData } = useContext(GlobalContextReport);
 
     // Log for debugging
-    // console.log('apiData:', apiData);
+    //console.log('apiData:', apiData);
 
     // Show loading state if apiData is null
     if (!apiData) {

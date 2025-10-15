@@ -65,7 +65,7 @@ const FantasyTracker = () => {
 
         try {
             const response = await axios.post(
-                'http://api.victoryvision.live:3000/api/insert-fantasy-points',
+                'https://api.victoryvision.live/api/insert-fantasy-points',
                 formData,
                 { headers: { 'Content-Type': 'multipart/form-data' } }
             );

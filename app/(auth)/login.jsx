@@ -25,7 +25,7 @@ const LoginScreen = () => {
         }
         setIsLoading(true);
         try {
-            const response = await axios.post(`http://api.victoryvision.live:3000/api/generateOtp`, { phoneNumber });
+            const response = await axios.post(`https://api.victoryvision.live/api/generateOtp`, { phoneNumber });
             const otpValue = response.data.otp;
             setGeneratedOtp(otpValue); // You can hide this in prod
             setIsOtpSent(true);
@@ -49,7 +49,7 @@ const LoginScreen = () => {
 
         setIsLoading(true);
         try {
-            const response = await axios.post(`http://api.victoryvision.live:3000/api/verifyOtp`, {
+            const response = await axios.post(`https://api.victoryvision.live/api/verifyOtp`, {
                 phoneNumber,
                 otp,
             });

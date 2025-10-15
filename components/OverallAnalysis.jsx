@@ -12,7 +12,7 @@ const OverallAnalysis = ({ analysisId }) => {
 
     const fetchAnalysis = async () => {
         try {
-            const response = await axios.get(`http://api.victoryvision.live:3000/api/analysis-result`, {
+            const response = await axios.get(`https://api.victoryvision.live/api/analysis-result`, {
                 params: { analysisId }
             });
             console.log('Analysis Success:', response.data);

@@ -25,7 +25,7 @@ const RegisterScreen = () => {
         try {
             setIsLoading(true);
 
-            const response = await axios.post('http://api.victoryvision.live:3000/api/createUser', {
+            const response = await axios.post('https://api.victoryvision.live/api/createUser', {
                 name,
                 email,
                 phoneNumber,

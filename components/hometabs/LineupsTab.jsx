@@ -19,7 +19,7 @@ const LineupsTab = ({ onContentHeightChange, matchID }) => {
 
     const fetchTeamPlayers = async (matchID) => {
         try {
-            const response = await axios.get(`http://api.victoryvision.live:3000/api/team-players`, {
+            const response = await axios.get(`https://api.victoryvision.live/api/team-players`, {
                 params: { matchID },
             });
             const data = response.data.results[0];

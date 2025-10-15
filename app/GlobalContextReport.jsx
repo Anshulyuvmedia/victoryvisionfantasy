@@ -15,11 +15,11 @@ export const GlobalProviderReport = ({ children }) => {
     // console.log("GLOBAL USER userid :", userid);
 
     try {
-      const response = await axios.get(`http://api.victoryvision.live:3000/api/get-reports`, {
+      const response = await axios.get(`https://api.victoryvision.live/api/get-reports`, {
         params: { userid }
       });
 
-      // console.log('Global Data:', JSON.stringify(response.data.reportResults, null, 2));
+      //console.log('Global Data:', JSON.stringify(response.data.reportResults, null, 2));
       setApiData(response.data.reportResults);
     } catch (error) {
       console.error('Global failed:', error);
@@ -34,7 +34,7 @@ export const GlobalProviderReport = ({ children }) => {
     // console.log("GLOBAL USER userid :", userid);
 
     try {
-      const response = await axios.get(`http://api.victoryvision.live:3000/api/get-notifications`, {
+      const response = await axios.get(`https://api.victoryvision.live/api/get-notifications`, {
         params: { userid }
       });
 
@@ -48,7 +48,7 @@ export const GlobalProviderReport = ({ children }) => {
 
   const fetchCurrentMatches = async () => {
     try {
-      const response = await axios.get(`http://api.victoryvision.live:3000/api/current-matches`,
+      const response = await axios.get(`https://api.victoryvision.live/api/current-matches`,
       );
       // console.log('Current Matches:', response.data.matches);
       settodaymatches(response.data.matches);

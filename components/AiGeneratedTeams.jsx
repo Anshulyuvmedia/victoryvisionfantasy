@@ -18,7 +18,7 @@ const AiGeneratedTeams = () => {
             const parsedData = storedData ? JSON.parse(storedData) : {};
             const userid = parsedData.userid;
             console.log("USER DATA AI: ", parsedData.userid);
-            const response = await axios.get(`http://api.victoryvision.live:3000/api/get-ai-teams`, {
+            const response = await axios.get(`https://api.victoryvision.live/api/get-ai-teams`, {
                 params: { userid }
             });
             // console.log('API Response:', response.data);
