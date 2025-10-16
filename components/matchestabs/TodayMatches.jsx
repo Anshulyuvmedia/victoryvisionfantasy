@@ -1,25 +1,38 @@
-import { StyleSheet, Text, View, useWindowDimensions, Animated } from 'react-native';
-import React, { useState } from 'react';
+// component/matchestabs/TodayMatches.jsx
+
+import { StyleSheet, Text, View, useWindowDimensions, Animated, ScrollView, RefreshControl, } from 'react-native';
+import React, { useState, useContext, useCallback } from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 import Twenty20 from './Twenty20';
 import OneDay from './OneDay';
 import TestMatches from './TestMatches';
-import { useContext } from 'react';
 import { GlobalContextReport } from '../../app/GlobalContextReport';
 
 const TodayMatches = () => {
-    const { todaymatches } = useContext(GlobalContextReport);
-    // Ensure todaymatches is always an array to avoid TypeError
-    const safeTodayMatches = Array.isArray(todaymatches) ? todaymatches : [];
+    const { todayMatches, loading, refreshGlobalData } = useContext(GlobalContextReport); // ✅ added refresh + loading
+    const [refreshing, setRefreshing] = useState(false);
 
-    // Filter matches by type
+    // 👇 ensure array safety
+    const safeTodayMatches = Array.isArray(todayMatches) ? todayMatches : [];
+    console.log('todaymatches', safeTodayMatches);
+
+    // 👇 filter by match type
     const matchesByType = {
-        Twenty20: safeTodayMatches.filter(match => match.format === 3),
-        OneDay: safeTodayMatches.filter(match => match.format === 7),
-        TestMatches: safeTodayMatches.filter(match => match.format === 5),
+        Twenty20: safeTodayMatches.filter((match) => match.format === 3),
+        OneDay: safeTodayMatches.filter((match) => match.format === 7),
+        TestMatches: safeTodayMatches.filter((match) => match.format === 5),
     };
-    //   console.log("Twenty Matches",Twenty20.length);
+
+    // ✅ added proper null guard for your console
+    console.log('Twenty20 Matches', matchesByType.Twenty20.length);
+
+    // 👇 pull-to-refresh
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await refreshGlobalData(); // refresh global context
+        setRefreshing(false);
+    }, [refreshGlobalData]);
 
     const renderScene = SceneMap({
         Twenty20: () => <Twenty20 data={matchesByType.Twenty20} />,
@@ -37,7 +50,7 @@ const TodayMatches = () => {
     const [index, setIndex] = useState(0);
 
     const renderTabBar = (props) => {
-        const { navigationState, position } = props;
+        const { position } = props;
         const inputRange = routes.map((_, i) => i);
 
         return (
@@ -106,8 +119,18 @@ const TodayMatches = () => {
         );
     };
 
+    // ✅ wrapped TabView inside ScrollView with pull-to-refresh
     return (
-        <View style={styles.container}>
+        <View
+            style={styles.container}
+            refreshControl={
+                <RefreshControl
+                    refreshing={refreshing || loading}
+                    onRefresh={onRefresh}
+                    colors={['#1d2a5e']}
+                />
+            }
+        >
             <TabView
                 navigationState={{ index, routes }}
                 renderScene={renderScene}

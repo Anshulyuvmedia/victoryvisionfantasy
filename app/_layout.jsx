@@ -1,60 +1,70 @@
+// app/_layout.jsx
 import { Stack, useRouter } from 'expo-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
-import { SafeAreaView, View, StyleSheet } from 'react-native';
+import { SafeAreaView, View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
-import { GlobalProviderReport } from './GlobalContextReport';
+import GlobalProviderReport, { GlobalContextReport } from './GlobalContextReport';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function AppLayout() {
-  const router = useRouter();
-  const [loaded, error] = useFonts({
+  const [fontsLoaded, fontsError] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+    if (fontsError) throw fontsError;
+  }, [fontsError]);
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded]);
 
-  if (!loaded) return null;
+  if (!fontsLoaded) return null;
 
-  return <RootLayoutNav />;
+  return (
+    <GlobalProviderReport>
+      <RootLayoutNav />
+    </GlobalProviderReport>
+  );
 }
 
 function RootLayoutNav() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true); // 👈 Added
+  const { loading } = useContext(GlobalContextReport);
+  const [checkingAuth, setCheckingAuth] = useState(false);
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
+  // Auth check
   useEffect(() => {
-    const checkAuthState = async () => {
+    const checkAuth = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
-        console.log('userToken : ', token);
-        setIsAuthenticated(!!token);
-      } catch (error) {
-        console.error('Error checking auth state:', error);
+        console.log(token);
+
+        if (token) router.replace('/');
+        else router.replace('/(auth)/login');
+      } catch (err) {
+        console.error('Auth check failed', err);
+        router.replace('(auth)');
       } finally {
-        setLoading(false); // 👈 Ensures render waits for AsyncStorage
+        setCheckingAuth(false);
       }
     };
-    checkAuthState();
-  }, []);
 
-  if (loading) {
-    // 👇 Optional placeholder while loading
+    checkAuth();
+  }, []);
+  console.log("Auth state →", { loading, checkingAuth });
+
+  if (loading || checkingAuth) {
+    // console.log('loading', loading, 'checkingAuth', checkingAuth);
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#ffffffff" />
         <StatusBar style="light" />
       </View>
     );
@@ -62,24 +72,8 @@ function RootLayoutNav() {
 
   return (
     <SafeAreaView style={{ flex: 1, paddingTop: insets.top }}>
-      <View
-        style={[
-          styles.statusBar,
-          { height: insets.top || 44, backgroundColor: '#111F54' },
-        ]}
-      >
-        <StatusBar style="light" />
-      </View>
-
-      <GlobalProviderReport>
-        <Stack screenOptions={{ headerShown: false }}>
-          {isAuthenticated ? (
-            <Stack.Screen name="(root)" options={{ headerShown: false }} />
-          ) : (
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          )}
-        </Stack>
-      </GlobalProviderReport>
+      <View style={[styles.statusBar, { height: insets.top || 44, backgroundColor: '#111F54' }]} />
+      <Stack screenOptions={{ headerShown: false }} />
     </SafeAreaView>
   );
 }

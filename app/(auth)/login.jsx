@@ -1,11 +1,12 @@
+// app/(auth)/login.jsx
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, Image } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { moderateScale, verticalScale, scale } from 'react-native-size-matters';
 import images from '@/constants/images';
 import axios from 'axios';
-
+import { GlobalContextReport } from '../GlobalContextReport';
 const LoginScreen = () => {
     const router = useRouter();
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -16,7 +17,7 @@ const LoginScreen = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [userdata, setuserdata] = useState(false);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-
+    const { refreshGlobalData } = useContext(GlobalContextReport);
     const generateOtp = async () => {
         // console.log(phoneNumber);
         if (!phoneNumber || phoneNumber.length !== 10) {
@@ -32,7 +33,7 @@ const LoginScreen = () => {
 
         } catch (error) {
             console.error('Generate OTP error:', error.message);
-            Alert.alert('Error', 'Failed to generate OTP.',error.message);
+            Alert.alert('Error', 'Failed to generate OTP.', error.message);
         }
         setIsLoading(false);
     };
@@ -68,7 +69,7 @@ const LoginScreen = () => {
                 };
                 // console.log("USER DATA : ",userData);
                 await AsyncStorage.setItem('userData', JSON.stringify(userData));
-
+                await refreshGlobalData();
                 router.replace('/(root)/(tabs)/');
             } else {
                 Alert.alert('Error', 'Invalid OTP. Please try again.');
