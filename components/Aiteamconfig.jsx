@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Switch, TouchableOpacity, ScrollView } from 'react-native'
+import { StyleSheet, Text, ActivityIndicator, View, Switch, TouchableOpacity, ScrollView, Alert } from 'react-native'
 import React, { useEffect, useState, useContext } from 'react';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Picker } from '@react-native-picker/picker';
@@ -8,7 +8,11 @@ import { GlobalContextReport } from '../app/GlobalContextReport';
 
 
 const Aiteamconfig = () => {
-    const { todaymatches } = useContext(GlobalContextReport);
+    const { todayMatches } = useContext(GlobalContextReport);
+    const safeTodayMatches = Array.isArray(todayMatches) ? todayMatches : [];
+    // console.log('todaymatchesss', safeTodayMatches);
+    // console.log("todayMatches From AI Config : ", todayMatches);
+
     const [autoPickCaptain, setAutoPickCaptain] = useState(false)
     const [autoPickViceCaptain, setAutoPickViceCaptain] = useState(false)
     // const [lockStarPlayers, setLockStarPlayers] = useState(false)
@@ -18,22 +22,24 @@ const Aiteamconfig = () => {
     const [riskLevel, setRiskLevel] = useState('Balanced')
     const contestOptions = ['T20I', 'ODI', 'Test Matches']
     const [authUser, setauthUser] = useState({});
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         const fetchUserData = async () => {
             const storedData = await AsyncStorage.getItem('userData');
-            // console.log("USER DATA : ", storedData);
+            // console.log("USER DATA From AI Config : ", storedData);
             setauthUser(storedData);
         };
         fetchUserData();
         //It will set Id of already selected Match
-        if (todaymatches && todaymatches.length > 0) {
-            setSelectedMatchId(todaymatches[0].matchId);
+        if (todayMatches && todayMatches.length > 0) {
+            setSelectedMatchId(todayMatches[0].matchId);
         }
-    }, [todaymatches]);
+    }, [todayMatches]);
 
 
     const generateAiTeams = async () => {
+        setLoading(true);
         const storedData = await AsyncStorage.getItem('userData');
         const parsedData = storedData ? JSON.parse(storedData) : {};
         const formData = new FormData();
@@ -45,7 +51,7 @@ const Aiteamconfig = () => {
         formData.append('selectedMatchId', selectedMatchId);
         formData.append('contestType', contestType);
         formData.append('riskLevel', riskLevel);
-        // console.log('Form Data:', formData);
+        console.log('Form Data:', formData);
 
         try {
             const response = await axios.post(
@@ -57,10 +63,12 @@ const Aiteamconfig = () => {
                     },
                 }
             );
-            console.log('Upload success');
+            setLoading(false);
+            Alert.alert('Success', 'AI Teams generated successfully!');
         } catch (error) {
+            Alert.alert('Error', 'Failed to generate AI teams. Please try again.');
             console.error('Upload failed:', error);
-        } c
+        }
     };
     return (
         <View style={styles.container}>
@@ -110,7 +118,7 @@ const Aiteamconfig = () => {
                             onValueChange={(itemValue) => setSelectedMatchId(itemValue)}
                             style={styles.picker}
                         >
-                            {todaymatches.map((option) => (
+                            {todayMatches.map((option) => (
                                 <Picker.Item
                                     key={option.matchId}
                                     label={option.title}
@@ -147,12 +155,12 @@ const Aiteamconfig = () => {
                     >
                         <Text style={[styles.safeButtonText, riskLevel === 'Safe' && styles.safeButtonSelected]}>Safe</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={[styles.balanceButton, riskLevel === 'Balanced' && styles.balanceButtonSelected]}
                         onPress={() => setRiskLevel('Balanced')}
                     >
                         <Text style={[styles.balanceButtonText, riskLevel === 'Balanced' && styles.balanceButtonSelected]}>Balanced</Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                     <TouchableOpacity
                         style={[styles.riskButton, riskLevel === 'Risky' && styles.riskButtonSelected]}
                         onPress={() => setRiskLevel('Risky')}
@@ -162,8 +170,16 @@ const Aiteamconfig = () => {
                 </View>
             </View>
 
-            <TouchableOpacity style={styles.generateButton} onPress={generateAiTeams}>
-                <Text style={styles.generateButtonText}>Generate AI Teams</Text>
+            <TouchableOpacity
+                style={[styles.generateButton, loading && { opacity: 0.7 }]}
+                onPress={generateAiTeams}
+                disabled={loading}
+            >
+                {loading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                    <Text style={styles.generateButtonText}>Generate AI Teams</Text>
+                )}
             </TouchableOpacity>
         </View>
     )
@@ -241,6 +257,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: 8,
+        gap: 4
 
     },
     riskButton: {
@@ -250,9 +267,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#ea580c',
         backgroundColor: '#fff7ed',
+        width: '50%'
     },
     riskButtonText: {
         color: '#ea580c',
+        textAlign: 'center'
     },
     safeButton: {
         paddingVertical: 8,
@@ -261,9 +280,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'green',
         backgroundColor: '#f0fdf4',
+        width: '50%'
     },
     safeButtonText: {
         color: 'green',
+        textAlign: 'center'
     },
     balanceButton: {
         paddingVertical: 8,

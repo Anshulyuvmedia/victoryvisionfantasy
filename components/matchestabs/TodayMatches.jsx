@@ -15,7 +15,7 @@ const TodayMatches = () => {
 
     // 👇 ensure array safety
     const safeTodayMatches = Array.isArray(todayMatches) ? todayMatches : [];
-    console.log('todaymatches', safeTodayMatches);
+    //console.log('todaymatches', safeTodayMatches);
 
     // 👇 filter by match type
     const matchesByType = {
@@ -25,7 +25,7 @@ const TodayMatches = () => {
     };
 
     // ✅ added proper null guard for your console
-    console.log('Twenty20 Matches', matchesByType.Twenty20.length);
+    //console.log('Twenty20 Matches', matchesByType.Twenty20.length);
 
     // 👇 pull-to-refresh
     const onRefresh = useCallback(async () => {

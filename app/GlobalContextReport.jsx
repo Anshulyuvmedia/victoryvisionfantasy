@@ -56,13 +56,14 @@ const GlobalProviderReport = ({ children }) => {
       setLoading(false);
     }
   }, []);
-
+  
+     
   // call fetch after login
   const init = useCallback(async () => {
     const storedData = await AsyncStorage.getItem('userData');
     const parsedData = storedData ? JSON.parse(storedData) : {};
     const userid = parsedData.userid;
-    console.log('userid:', userid);
+    // console.log('userid:', userid);
     if (userid) await fetchAllData(userid);
   }, [fetchAllData]);
 

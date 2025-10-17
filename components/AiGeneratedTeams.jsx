@@ -21,7 +21,7 @@ const AiGeneratedTeams = () => {
             const response = await axios.get(`https://api.victoryvision.live/api/get-ai-teams`, {
                 params: { userid }
             });
-            // console.log('API Response:', response.data);
+            //console.log('API Response:', response.data);
 
             const results = response.data.results;
             let processedTeams = [];
