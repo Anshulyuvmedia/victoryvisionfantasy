@@ -20,7 +20,7 @@ const TodayMatches = () => {
     // 👇 filter by match type
     const matchesByType = {
         Twenty20: safeTodayMatches.filter((match) => match.format === 3),
-        OneDay: safeTodayMatches.filter((match) => match.format === 7),
+        OneDay: safeTodayMatches.filter((match) => match.format === 1 || match.format === 7),
         TestMatches: safeTodayMatches.filter((match) => match.format === 5),
     };
 

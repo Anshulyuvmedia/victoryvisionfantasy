@@ -21,6 +21,7 @@ const PredictionsTab = ({ onContentHeightChange ,matchID }) => {
     // Fetch Match Predictions Data here by matching  Match ID..............
     useEffect(() => {
         const fetchMatchPredictions = async (matchID) => {
+            console.log(matchID);
             try {
                 const response = await axios.get(`https://api.victoryvision.live/api/get-matchprediction`, {
                     params: { matchID }
