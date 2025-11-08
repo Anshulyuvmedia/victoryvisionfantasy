@@ -8,6 +8,7 @@ import images from '@/constants/images';
 
 const playerlist = () => {
     const { id } = useLocalSearchParams();
+    console.log("Player list ID : ", id);
     const [apiData, setApiData] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeRole, setActiveRole] = useState('ALL');
@@ -75,12 +76,13 @@ const playerlist = () => {
     const fetchAllTeamMembers = async () => {
         try {
             setIsLoading(true);
-            const response = await axios.get(`https://api.victoryvision.live/api/get-ai-teams`, {
+            const response = await axios.get(`https://api.victoryvision.live/api/getUserAITeamByID`, {
                 params: { id },
             });
-            // console.log('Team Data:', JSON.stringify(response.data, null, 2));
+            console.log('Team Data:', JSON.stringify(response.data, null, 2));
 
-            setApiData(response.data.results.players || []);
+            setApiData(response.data.team?.[0]?.players || []);
+
         } catch (error) {
             console.error('Team fetch failed:', error.message);
             setApiData([]);

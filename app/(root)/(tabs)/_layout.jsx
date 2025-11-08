@@ -1,13 +1,13 @@
 import { Tabs } from 'expo-router';
 import React, { useRef, useEffect } from 'react';
 import { View, Text, Animated, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
-import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import icons from '@/constants/icons';
 
-// Get screen width
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// TabItem Component
+// ───────────────────────────────
+// Tab Item Component
+// ───────────────────────────────
 const TabItem = ({ route, index, isFocused, options, navigation }) => {
     const iconScale = useRef(new Animated.Value(isFocused ? 1 : 0.84)).current;
     const iconTranslateY = useRef(new Animated.Value(isFocused ? -24 : 0)).current;
@@ -61,19 +61,7 @@ const TabItem = ({ route, index, isFocused, options, navigation }) => {
         }
     };
 
-    const getIconName = (routeName, focused) => {
-        const iconMap = {
-            index: focused ? 'home' : 'home',
-            points: focused ? 'trophy' : 'trophy',
-            aiteams: focused ? 'users' : 'users',
-            reports: focused ? 'file' : 'file',
-            kabaddi: focused ? 'futbol-o' : 'futbol-o',
-        };
-        return iconMap[routeName] || 'circle';
-    };
-
     const iconColor = isFocused ? '#fff' : '#888888';
-
     const customIcons = {
         index: icons.cricketwhite,
         points: icons.pointswhite,
@@ -89,14 +77,7 @@ const TabItem = ({ route, index, isFocused, options, navigation }) => {
                     transform: [{ scale: iconScale }, { translateY: iconTranslateY }],
                 }}
             >
-                <View
-                    style={{
-                        width: 28,
-                        height: 28,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                    }}
-                >
+                <View style={styles.iconWrapper}>
                     <Animated.Image
                         source={customIcons[route.name]}
                         style={{
@@ -108,6 +89,7 @@ const TabItem = ({ route, index, isFocused, options, navigation }) => {
                     />
                 </View>
             </Animated.View>
+
             <Animated.Text
                 style={[
                     styles.label,
@@ -123,66 +105,91 @@ const TabItem = ({ route, index, isFocused, options, navigation }) => {
     );
 };
 
+// ───────────────────────────────
 // Custom TabBar Component
+// ───────────────────────────────
 const CustomTabBar = ({ state, descriptors, navigation }) => {
     const translateX = useRef(new Animated.Value(0)).current;
-    const tabWidth = SCREEN_WIDTH / 5; // Full screen width / 5 tabs
-    const circlePosition = state.index * tabWidth;
+
+    // Hide any tabs you don't want shown (like "reports")
+    const HIDDEN_TABS = ['reports'];
+    const visibleRoutes = state.routes.filter(
+        (route) => !HIDDEN_TABS.includes(route.name)
+    );
+
+    const tabCount = visibleRoutes.length;
+    const tabWidth = SCREEN_WIDTH / tabCount;
 
     useEffect(() => {
-        Animated.timing(translateX, {
-            toValue: circlePosition,
-            duration: 400,
-            useNativeDriver: true,
-        }).start();
-    }, [state.index]);
+        const visibleIndex = visibleRoutes.findIndex(
+            (r) => r.name === state.routes[state.index].name
+        );
+        if (visibleIndex >= 0) {
+            Animated.timing(translateX, {
+                toValue: visibleIndex * tabWidth,
+                duration: 400,
+                useNativeDriver: true,
+            }).start();
+        }
+    }, [state.index, tabCount]);
 
     return (
         <View style={[styles.tabBar, { width: SCREEN_WIDTH }]}>
+            {/* Floating Circular Indicator */}
             <Animated.View
                 style={[
                     styles.indicator,
                     {
                         transform: [{ translateX }],
-                        left: tabWidth / 2 - 22, // Center indicator in tab
+                        left: tabWidth / 2 - 22, // centers the indicator
                     },
                 ]}
             >
                 <View style={styles.indicatorSolid} />
             </Animated.View>
+
+            {/* Ellipse background image */}
             <Animated.Image
                 source={icons.ellipse}
                 style={[
                     styles.ellipse,
                     {
                         transform: [{ translateX }],
-                        left: tabWidth / 2 - 50, // Center ellipse (adjust based on image width)
+                        left: tabWidth / 2 - 50, // centers the ellipse
                     },
                 ]}
                 resizeMode="contain"
             />
-            {state.routes.map((route, index) => (
-                <TabItem
-                    key={route.key}
-                    route={route}
-                    index={index}
-                    isFocused={state.index === index}
-                    options={descriptors[route.key].options}
-                    navigation={navigation}
-                />
-            ))}
+
+            {/* Render visible tabs only */}
+            {visibleRoutes.map((route, index) => {
+                const { options } = descriptors[route.key];
+                const isFocused = state.routes[state.index].name === route.name;
+                return (
+                    <TabItem
+                        key={route.key}
+                        route={route}
+                        index={index}
+                        isFocused={isFocused}
+                        options={options}
+                        navigation={navigation}
+                    />
+                );
+            })}
         </View>
     );
 };
 
+// ───────────────────────────────
 // Styles
+// ───────────────────────────────
 const styles = StyleSheet.create({
     tabBar: {
         flexDirection: 'row',
         backgroundColor: '#fafafa',
         height: 70,
-        borderTopLeftRadius: 10, // Rounded top left
-        borderTopRightRadius: 10, // Rounded top right
+        borderTopLeftRadius: 10,
+        borderTopRightRadius: 10,
         shadowColor: 'rgba(18, 22, 33, 0.1)',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 1,
@@ -195,7 +202,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 99,
-
+    },
+    iconWrapper: {
+        width: 28,
+        height: 28,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     indicator: {
         position: 'absolute',
@@ -219,9 +231,9 @@ const styles = StyleSheet.create({
     ellipse: {
         position: 'absolute',
         zIndex: 0,
-        width: 100, // Match the width from your provided style
-        height: 28, // Match the height from your provided style
-        top: 0, // Position at the bottom of tab bar
+        width: 100,
+        height: 28,
+        top: 0,
     },
     label: {
         position: 'absolute',
@@ -233,12 +245,15 @@ const styles = StyleSheet.create({
     },
 });
 
+// ───────────────────────────────
+// Tabs Layout
+// ───────────────────────────────
 export default function TabLayout() {
     return (
         <Tabs
             screenOptions={{
                 headerShown: false,
-                tabBarStyle: { display: 'none' }, // Hide default tab bar
+                tabBarStyle: { display: 'none' },
             }}
             tabBar={(props) => <CustomTabBar {...props} />}
         >
@@ -267,6 +282,7 @@ export default function TabLayout() {
                 name="reports"
                 options={{
                     title: 'Reports',
+                    href: null, // hides this tab, route still accessible via navigation
                     lazy: true,
                 }}
             />

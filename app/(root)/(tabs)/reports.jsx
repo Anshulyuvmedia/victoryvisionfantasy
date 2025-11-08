@@ -8,7 +8,6 @@ import CaptainAnalysis from '@/components/CaptainAnalysis';
 
 
 const Reports = () => {
-
     return (
         <View style={styles.container}>
             <Header />

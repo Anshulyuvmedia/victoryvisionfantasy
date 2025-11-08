@@ -24,7 +24,7 @@ const AiTeamsTab = ({ onContentHeightChange, matchID }) => {
             const response = await axios.get(`https://api.victoryvision.live/api/get-ai-teams`, {
                 params: { matchID },
             });
-            console.log('API Response:', response.data);
+            // console.log('API Response:', response.data);
 
             if (response.data.status && response.data.results) {
                 const safeTeam = response.data.results.find((team) => team.type === 'Safe') || null;
