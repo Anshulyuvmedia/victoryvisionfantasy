@@ -6,31 +6,52 @@ import axios from 'axios';
 
 const OverallAnalysis = ({ analysisId }) => {
     console.log("Overall data : ", analysisId);
+    const analysismainid = analysisId._id;
     const [isLoading, setisLoading] = useState(false);
     const [apiData, setapiData] = useState({});
-    const [analysisData, setanalysisData] = useState({});
+    const [analysisData, setanalysisData] = useState([]);
+    const [error, setError] = useState(null); // New: For error display
 
     const fetchAnalysis = async () => {
+        setisLoading(true);
+        setError(null); // Reset error
+        console.log('Fetching with ID:', analysismainid); // Debug log
         try {
             const response = await axios.get(`https://api.victoryvision.live/api/analysis-result`, {
-                params: { analysisId }
+                params: { analysismainid }
             });
             console.log('Analysis Success:', response.data);
 
-            const analysisObj = response.data.analysisResults.analysis || {};
-            setanalysisData(Object.entries(analysisObj));
+            const analysisObj = response.data.analysisResults?.analysis || {}; // Safer chaining
+            const entries = Object.entries(analysisObj);
+            console.log('Processed entries:', entries); // Debug: Check if entries is populated
+            setanalysisData(entries);
             setapiData(response.data.analysisResults);
             setisLoading(false);
 
         } catch (error) {
             console.error('Analysis failed:', error);
+            setError('Failed to load analysis. Check connection or ID.'); // User-friendly
             setisLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchAnalysis();
-    }, []);
+        if (analysismainid) { // Guard: Only fetch if ID exists
+            fetchAnalysis();
+        } else {
+            console.warn('No analysismainid provided'); // Debug
+            setError('Invalid analysis ID');
+        }
+    }, []); // Note: If analysisId changes, add [analysisID] dependency
+
+    if (error) {
+        return (
+            <View style={styles.container}>
+                <Text style={styles.errorText}>{error}</Text>
+            </View>
+        );
+    }
 
     return (
         isLoading ? (
@@ -43,10 +64,11 @@ const OverallAnalysis = ({ analysisId }) => {
                 </View>
 
                 <FlatList
-                    data={analysisData || []}
-                    keyExtractor={([title], index) => `${title}-${index}`}
+                    data={analysisData}
+                    keyExtractor={([title], index) => title || `item-${index}`} // Improved: Use title if available
                     numColumns={2}
                     contentContainerStyle={styles.grid}
+                    ListEmptyComponent={<Text style={styles.emptyText}>No analysis data available</Text>} // New: Empty state
                     renderItem={({ item }) => {
                         const [title, value] = item;
                         return (
@@ -79,7 +101,7 @@ const OverallAnalysis = ({ analysisId }) => {
                             <View style={styles.bulletList}>
                                 {apiData.strongPoints
                                     .split('.')
-                                    .filter(point => point.trim().length > 0) // remove empty strings
+                                    .filter(point => point.trim().length > 0)
                                     .map((point, index) => (
                                         <View key={index} style={styles.bulletItem}>
                                             <Octicons name="dot-fill" size={18} color="#101d4d" style={styles.bullet} />
@@ -93,11 +115,11 @@ const OverallAnalysis = ({ analysisId }) => {
             </View>
         )
     );
-
 };
 
 export default OverallAnalysis;
 
+// ... (styles unchanged, but add these new ones)
 const styles = StyleSheet.create({
     container: {
         padding: 16,
@@ -179,5 +201,17 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#000',
         flex: 1,
+    },
+    errorText: {
+        fontSize: 16,
+        color: 'red',
+        textAlign: 'center',
+        marginTop: 20,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: 'gray',
+        textAlign: 'center',
+        padding: 20,
     },
 });

@@ -51,6 +51,7 @@ const FantasyTracker = () => {
     const uploadFile = async () => {
         const storedData = await AsyncStorage.getItem('userData');
         const parsedData = storedData ? JSON.parse(storedData) : {};
+        console.log(parsedData);
         setisLoading(true);
         if (!fileData) return;
 
