@@ -156,7 +156,7 @@ const MatchDetails = () => {
             component: (
                 <View style={{ marginTop: 30 }}>
                     <View style={{
-                        height: layout.height - 440,
+                        height: layout.height - 340,
                         borderRadius: 24,
                         overflow: 'hidden',
                         backgroundColor: '#fff',

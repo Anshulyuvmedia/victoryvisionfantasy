@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: moderateScale(20),
-        top: 30,
+        top: 25,
     },
     matchNo: {
         color: '#FFFFFF',
