@@ -50,7 +50,7 @@ const AiTeamsTab = ({ matchID }) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1,},
+    container: { flex: 1, padding: 10,},
     content: { paddingTop: 5 },
     section: { marginBottom: 24 },
 });

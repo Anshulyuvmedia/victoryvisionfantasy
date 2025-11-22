@@ -54,7 +54,7 @@ const AiRiskyTeam = ({ teamData }) => {
         return ['ALL', 'WK', 'BAT', 'BOW'].map(role => ({
             role,
             count: counts[role],
-            totalCredits: credits[role].toFixed(1),
+            totalCredits: credits[role],
         }));
     }, [processedTeamData]);
 
@@ -108,7 +108,7 @@ const AiRiskyTeam = ({ teamData }) => {
                     <Text style={styles.title}>Risky Team</Text>
                 </View>
                 <View style={styles.winRateSection}>
-                    <Text style={styles.winRate}>{teamData.winRate ? `${teamData.winRate}% Win` : 'N/A'}</Text>
+                    <Text style={styles.winRate}>{teamData.winRate ? `${teamData.winRate}% Win Rate` : 'N/A'}</Text>
                     <Text style={styles.subtitle}>High Risk • High Reward</Text>
                 </View>
             </View>
@@ -124,7 +124,7 @@ const AiRiskyTeam = ({ teamData }) => {
                         <Text style={[styles.tabText, activeRole === role && styles.activeTabText]}>
                             {role} ({count})
                         </Text>
-                        <Text style={styles.tabCredits}>{totalCredits}cr</Text>
+                        <Text style={styles.tabCredits}>{totalCredits} cr</Text>
                     </TouchableOpacity>
                 ))}
             </View>

@@ -1,96 +1,129 @@
-import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
-import React, { useState } from 'react'
+import { View, StyleSheet, FlatList, TouchableOpacity, Text } from 'react-native';
+import React, { useState } from 'react';
 import Header from '@/components/Header';
 import Aiteamconfig from '@/components/Aiteamconfig';
 import AiGeneratedTeams from '@/components/AiGeneratedTeams';
-import { Feather } from '@expo/vector-icons'; // Ensure this is installed
+import { Feather } from '@expo/vector-icons';
 
 const AiTeams = () => {
     const [userAITeams, setuserAITeams] = useState('');
+
+    // Data for FlatList sections
+    const sections = [
+        {
+            id: 'config',
+            component: <Aiteamconfig setuserAITeams={setuserAITeams} />,
+            title: 'Configure AI Team',
+        },
+        {
+            id: 'teams',
+            component: <AiGeneratedTeams userAITeams={userAITeams} />,
+            title: 'Your AI Generated Teams',
+        },
+    ];
+
+    const renderSection = ({ item }) => (
+        <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>{item.title}</Text>
+            <View style={styles.sectionContent}>
+                {item.component}
+            </View>
+        </View>
+    );
+
     return (
         <View style={styles.container}>
             <Header />
-            <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={false}
-            >
-                <View style={styles.section}>
-                    <Aiteamconfig setuserAITeams={setuserAITeams} />
-                </View>
-                <View style={styles.section}>
-                    <AiGeneratedTeams userAITeams={userAITeams} />
-                </View>
-            </ScrollView>
-            <View style={styles.actionBox}>
-                <TouchableOpacity
-                    style={styles.chatButton}
-                    onPress={() => console.log('Chat button pressed')} // Simplified handler
-                >
-                    <View style={styles.buttonContent}>
-                        <Feather name="plus" size={24} color="#ea580c" />
-                        <Text style={styles.buttonText}>Copy Team</Text>
-                    </View>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={styles.chatButton}
-                    onPress={() => console.log('Chat button pressed')} // Simplified handler
-                >
-                    <View style={styles.buttonContent}>
-                        <Text style={styles.buttonText}>Bulk Copy Teams</Text>
-                    </View>
-                </TouchableOpacity>
-            </View>
-        </View>
-    )
-}
 
-export default AiTeams
+            <FlatList
+                data={sections}
+                renderItem={renderSection}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+            />
+
+            {/* Floating Action Buttons */}
+            {/* <View style={styles.fabContainer}>
+                <TouchableOpacity style={styles.fabButton} onPress={() => console.log('Copy Team')}>
+                    <Feather name="copy" size={22} color="#ea580c" />
+                    <Text style={styles.fabText}>Copy Team</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.fabButton} onPress={() => console.log('Bulk Copy')}>
+                    <Feather name="copy" size={22} color="#ea580c" />
+                    <Text style={styles.fabText}>Bulk Copy Teams</Text>
+                </TouchableOpacity>
+            </View> */}
+        </View>
+    );
+};
+
+export default AiTeams;
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f0f1f3',
     },
-    scrollView: {
-        padding: 15,
+    listContent: {
+        padding: 16,
     },
-    scrollContent: {
-        paddingBottom: 100,
+    sectionContainer: {
+        marginBottom: 24,
     },
-    section: {
-        // marginBottom: 5,
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: '#1a1a1a',
+        marginBottom: 12,
+        paddingLeft: 4,
     },
-    actionBox: {
+    sectionContent: {
+        // backgroundColor: '#fff',
+        // borderRadius: 16,
+        overflow: 'hidden',
+        // elevation: 6,
+        // shadowColor: '#000',
+        // shadowOffset: { width: 0, height: 2 },
+        // shadowOpacity: 0.08,
+        // shadowRadius: 10,
+    },
+
+    // FAB Container (Floating Action Buttons)
+    fabContainer: {
         position: 'absolute',
-        bottom: 30,
-        right: 10,
-        width: "95%",
-        borderRadius: 10,
-        paddingBlock: 10,
-        backgroundColor: '#ffffffcb',
+        bottom: 28,
+        left: 16,
+        right: 16,
         flexDirection: 'row',
-        justifyContent: 'space-evenly',
-        alignItems: 'center',
-    },
-    chatButton: {
-        paddingInline: 20,
-        paddingBlock: 10,
-        borderRadius: 30,
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        backgroundColor: '#ffffffee',
+        borderRadius: 50,
+        elevation: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.18,
+        shadowRadius: 12,
         borderWidth: 1,
-        borderColor: '#ea580c',
-        backgroundColor: '#fff7ed',
-        justifyContent: 'center',
-        alignItems: 'center',
+        borderColor: '#fed7aa',
     },
-    buttonContent: {
+    fabButton: {
         flexDirection: 'row',
         alignItems: 'center',
+        backgroundColor: '#fff7ed',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        borderRadius: 30,
+        borderWidth: 1.5,
+        borderColor: '#fb923c',
     },
-    buttonText: {
+    fabText: {
         color: '#ea580c',
-        fontSize: 14,
-        fontWeight: '600',
-        marginLeft: 8, // Space between icon and text
+        fontSize: 15,
+        fontWeight: '700',
+        marginLeft: 10,
     },
-})
+});

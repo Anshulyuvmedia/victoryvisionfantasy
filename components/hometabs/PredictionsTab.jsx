@@ -39,7 +39,7 @@ const PredictionsTab = ({ matchID }) => {
                     <View style={styles.cardBlue}>
                         <Text style={styles.label}>Toss Winner</Text>
                         <Text style={styles.valueBlue}>{apiData?.tossWinner || '—'}</Text>
-                        <Text style={styles.prob}>{apiData?.tossProbability ? `${apiData.tossProbability}%` : '—'}</Text>
+                        <Text style={styles.prob}>{apiData?.tossProbability ? `${apiData.tossProbability}%` : '—'} Probability</Text>
                     </View>
                 </LinearGradient>
 
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     label: { fontSize: 13, color: '#666', marginBottom: 4 },
     valueBlue: { fontSize: 18, fontWeight: 'bold', color: '#1e88e5' },
     valueOrange: { fontSize: 18, fontWeight: 'bold', color: '#ef6c00' },
-    prob: { fontSize: 13, color: '#444', marginTop: 4 },
+    prob: { fontSize: 12, color: '#444', marginTop: 4 },
     small: { fontSize: 12, color: '#888', marginTop: 4 },
     subheader: {
         fontSize: 17,

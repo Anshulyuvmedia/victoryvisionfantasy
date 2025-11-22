@@ -12,6 +12,12 @@ const MatchBanner = ({ matchBannerData, refreshing = false }) => {
         ? moment(matchBannerData.matchDate).local().format("h:mm A")
         : "";
 
+    const truncate = (text, max = 50) => {
+        if (text === undefined || text === null) return '';
+        const s = String(text);
+        return s.length > max ? s.slice(0, max) + '...' : s;
+    };
+
     return (
         <View style={styles.outerContainer}>
             <ImageBackground
@@ -52,8 +58,8 @@ const MatchBanner = ({ matchBannerData, refreshing = false }) => {
                     </View>
 
                     <View style={styles.details}>
-                        <Text style={styles.location}>{matchBannerData?.venue}</Text>
-                        <Text style={styles.weather}>{matchBannerData?.title}</Text>
+                        <Text style={styles.location}>{truncate(matchBannerData?.venue, 32)}</Text>
+                        <Text style={styles.weather}>{truncate(matchBannerData?.title, 50)}</Text>
                     </View>
                 </ImageBackground>
             </ImageBackground>

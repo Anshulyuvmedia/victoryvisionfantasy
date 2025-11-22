@@ -199,14 +199,7 @@ const MatchDetails = () => {
                 keyExtractor={item => item.key}
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.flatListContent}
-                refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        colors={['#475da8']}
-                        tintColor="#475da8"
-                    />
-                }
+                
             />
         </View>
     );

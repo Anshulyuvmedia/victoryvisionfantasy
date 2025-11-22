@@ -13,9 +13,11 @@ import redDown from "@/assets/images/home/redDown.png";
 import greenUp from "@/assets/images/home/greenUp.png";
 import gaingreen from "@/assets/images/home/gaingreen.png";
 import lossred from "@/assets/images/home/lossred.png";
+import sampleimg from "@/assets/images/home/ss2.png";
 
 export default {
     applogo,
+    sampleimg,
     csk,
     mi,
     bannergradient,

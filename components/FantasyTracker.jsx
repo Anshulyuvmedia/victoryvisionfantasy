@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker'; // Import document picker
@@ -6,6 +6,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'; // Ensure this is i
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import OverallAnalysis from './OverallAnalysis';
+import images from '@/constants/images';
 
 const FantasyTracker = () => {
     const [selectedFile, setSelectedFile] = useState(null);
@@ -114,6 +115,11 @@ const FantasyTracker = () => {
                     </TouchableOpacity>
                 </>
             )}
+
+            <View className="mb-3">
+                <Text style={styles.whatYouGetText}>Sample Image to upload</Text>
+                <Image source={images.sampleimg} style={styles.playerIcon} resizeMode="contain" />
+            </View>
             <View style={styles.whatYouGetSection}>
                 <Text style={styles.whatYouGetText}>What you'll get:</Text>
                 <View style={styles.benefitsList}>
@@ -164,9 +170,11 @@ const FantasyTracker = () => {
 export default FantasyTracker;
 
 const styles = StyleSheet.create({
-    container: {
-        // padding: 10,
-        // backgroundColor: '#f0f1f3',
+    playerIcon: {
+        width: 350,
+        height: 350,
+        borderRadius: 10,
+        marginBottom: 10,
     },
     header: {
         flexDirection: 'row',

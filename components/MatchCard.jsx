@@ -20,6 +20,12 @@ const MatchCard = ({ match }) => {
         ? moment(match.matchDate).utcOffset('+05:30').format('h:mm A')
         : '';
 
+    const truncate = (text, max = 50) => {
+        if (text === undefined || text === null) return '';
+        const s = String(text);
+        return s.length > max ? s.slice(0, max) + '...' : s;
+    };
+
     return (
         <TouchableOpacity
             style={styles.card}
@@ -50,7 +56,7 @@ const MatchCard = ({ match }) => {
                 <Text style={styles.timerText}>{matchTime}</Text>
             </View>
             <Text style={styles.venue}>
-                {match.venue.name}, {match.venue.location}, {match.venue.country}
+                {truncate(match.venue.name, 20)}, {truncate(match.venue.location, 32)}, {truncate(match.venue.country, 32)}
             </Text>
             <Text style={styles.competition}>{match.competition.title} ({match.formatStr})</Text>
         </TouchableOpacity>
