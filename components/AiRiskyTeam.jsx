@@ -4,144 +4,145 @@ import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import images from '@/constants/images';
 
 const AiRiskyTeam = ({ teamData }) => {
-    const [activeRole, setActiveRole] = useState('ALL'); // Default to show all players
+    const [activeRole, setActiveRole] = useState('ALL');
 
-    // Map role to icon
     const getRoleIcon = (role) => {
         switch (role) {
-            case 'WK':
-                return images.wk;
-            case 'BAT':
-                return images.bat;
-            case 'ALL':
-                return images.ar;
-            case 'BOW':
-                return images.bow;
-            default:
-                return images.ar; // Fallback for unknown roles
+            case 'WK': return images.wk;
+            case 'BAT': return images.bat;
+            case 'BOW': return images.bow;
+            case 'ALL': return images.ar;
+            default: return images.ar;
         }
     };
-
-    // Process teamData from props, handle missing data and duplicates
+    // Safely process team data
     const processedTeamData = useMemo(() => {
-        if (!teamData || !teamData.players) return [];
+        if (!teamData?.players || !Array.isArray(teamData.players)) return [];
 
-        // Remove duplicates based on _id
-        const uniquePlayers = [];
-        const seenIds = new Set();
-        teamData.players.forEach((player) => {
-            if (!seenIds.has(player._id) && player.name && player.role) {
-                seenIds.add(player._id);
-                uniquePlayers.push({
+        const seen = new Set();
+        return teamData.players
+            .filter(player => player?._id && player.name && !seen.has(player._id))
+            .map(player => {
+                seen.add(player._id);
+                return {
                     id: player._id,
                     name: player.name,
-                    role: player.role,
-                    score: player.credit ? `${player.credit}cr` : 'N/A', // Format credit as score
-                    team: 'TBD', // Placeholder; replace with logic to get team
+                    role: player.role || 'ALL',
+                    score: player.credit ? `${player.credit}cr` : 'N/A',
                     icon: getRoleIcon(player.role),
-                    image: images.playerPlaceholder, // Default placeholder
-                    status: player.status || 'Unknown',
-                });
-            }
-        });
-
-        return uniquePlayers;
+                    isCaptain: teamData.settings?.captain === player.name,
+                    isViceCaptain: teamData.settings?.viceCaptain === player.name,
+                };
+            });
     }, [teamData]);
 
-    // Calculate stats for tabs (WK, BAT, ALL, BOW counts and total credits)
+
+    // Stats for tabs
     const stats = useMemo(() => {
-        const roles = ['ALL', 'WK', 'BAT', 'BOW'];
-        return roles.map((role) => {
-            const players = processedTeamData.filter((p) => p.role === role);
-            const count = players.length;
-            const totalCredits = players.reduce((sum, p) => {
-                const credit = parseFloat(p.score) || 0;
-                return sum + credit;
-            }, 0);
-            return { role, count, totalCredits: totalCredits.toFixed(1) };
+        const counts = { ALL: processedTeamData.length, WK: 0, BAT: 0, BOW: 0 };
+        const credits = { ALL: 0, WK: 0, BAT: 0, BOW: 0 };
+
+        processedTeamData.forEach(p => {
+            const role = p.role;
+            counts[role] = (counts[role] || 0) + 1;
+            counts.ALL++;
+            const cr = parseFloat(p.score) || 0;
+            credits[role] = (credits[role] || 0) + cr;
+            credits.ALL += cr;
         });
+
+        return ['ALL', 'WK', 'BAT', 'BOW'].map(role => ({
+            role,
+            count: counts[role],
+            totalCredits: credits[role].toFixed(1),
+        }));
     }, [processedTeamData]);
 
-    // Filter data based on active role
-    const filteredData = activeRole === 'ALL' ? processedTeamData : processedTeamData.filter((item) => item.role === activeRole);
+    const filteredData = activeRole === 'ALL'
+        ? processedTeamData
+        : processedTeamData.filter(p => p.role === activeRole);
 
     const handleTabPress = (role) => {
-        setActiveRole(activeRole === role ? 'ALL' : role); // Toggle to ALL if same role is clicked
+        setActiveRole(activeRole === role ? 'ALL' : role);
     };
 
-    const renderItem = ({ item }) => (
+    const renderPlayer = ({ item }) => (
         <View style={styles.playerContainer}>
             <View style={styles.playerIconBox}>
-                <Image source={item.icon} style={styles.playerImage} resizeMode="contain" />
+                <Image source={item.icon} style={styles.playerIcon} resizeMode="contain" />
             </View>
+
             <View style={styles.playerInfo}>
-                <View style={styles.playerheader}>
-                    <View style={styles.nameContainer}>
-                        <Text style={styles.name}>{item.name}</Text>
-                        {teamData?.settings?.captain === item.name && (
-                            <Text style={styles.captainText}>(C)</Text>
-                        )}
-                        {teamData?.settings?.viceCaptain === item.name && (
-                            <Text style={styles.captainText}>(VC)</Text>
-                        )}
+                <View style={styles.row}>
+                    <View style={styles.nameRow}>
+                        <Text style={styles.playerName}>{item.name}</Text>
+                        {item.isCaptain && <Text style={styles.captainBadge}> (C)</Text>}
+                        {item.isViceCaptain && <Text style={styles.viceCaptainBadge}> (VC)</Text>}
                     </View>
-                    <View style={styles.roleContainer}>
+                    <View style={styles.roleBadge}>
                         <Text style={styles.roleText}>{item.role}</Text>
                     </View>
                 </View>
-                <View style={styles.playerheader}>
-                    <View>
-                        <Text style={styles.scoreText}>{item.score}</Text>
-                        <Text style={styles.teamText}>{item.team}</Text>
-                    </View>
+
+                <View style={styles.row}>
+                    <Text style={styles.creditText}>{item.score}</Text>
                 </View>
             </View>
         </View>
     );
 
+    if (!teamData) {
+        return (
+            <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>Risky Team Not Available</Text>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
+            {/* Header */}
             <View style={styles.header}>
-                <View style={styles.titleBox}>
-                    <FontAwesome5 name="bolt" size={24} color="#ea580c" />
+                <View style={styles.titleSection}>
+                    <FontAwesome5 name="bolt" size={26} color="#ea580c" />
                     <Text style={styles.title}>Risky Team</Text>
                 </View>
-                <View style={styles.winRateBox}>
-                    <Text style={styles.winBox}>{teamData?.winRate ? `${teamData.winRate}% Win Rate` : 'N/A'}</Text>
-                    <Text style={styles.subtitle}>High Risk High Rewards</Text>
+                <View style={styles.winRateSection}>
+                    <Text style={styles.winRate}>{teamData.winRate ? `${teamData.winRate}% Win` : 'N/A'}</Text>
+                    <Text style={styles.subtitle}>High Risk • High Reward</Text>
                 </View>
             </View>
-            <View style={styles.stats}>
+
+            {/* Role Tabs */}
+            <View style={styles.tabsContainer}>
                 {stats.map(({ role, count, totalCredits }) => (
                     <TouchableOpacity
                         key={role}
-                        style={[styles.tabBox, activeRole === role ? styles.activeTabBox : null]}
+                        style={[styles.tab, activeRole === role && styles.activeTab]}
                         onPress={() => handleTabPress(role)}
                     >
-                        <Text style={[styles.tabTitle, activeRole === role ? styles.activetabTitle : null]}>
+                        <Text style={[styles.tabText, activeRole === role && styles.activeTabText]}>
                             {role} ({count})
                         </Text>
-                        <Text style={styles.tabSubTitle}>{totalCredits}cr</Text>
+                        <Text style={styles.tabCredits}>{totalCredits}cr</Text>
                     </TouchableOpacity>
                 ))}
             </View>
-            <View style={styles.boxTitle}>
-                <TouchableOpacity onPress={() => setActiveRole('ALL')}>
-                    <Text style={styles.boxTitleText}>
-                        Playing XI {activeRole !== 'ALL' ? `(${activeRole})` : ''}
-                    </Text>
-                </TouchableOpacity>
-            </View>
-            {processedTeamData.length === 0 ? (
-                <Text style={styles.noDataText}>No team data available</Text>
-            ) : (
-                <FlatList
-                    data={filteredData}
-                    renderItem={renderItem}
-                    keyExtractor={(item) => item.id}
-                    scrollEnabled={false} // Disable FlatList scrolling to rely on parent TabView
-                />
-            )}
+
+            {/* Playing XI Title */}
+            <Text style={styles.playingXiTitle}>
+                Playing XI {activeRole !== 'ALL' ? `(${activeRole})` : ''}
+            </Text>
+
+            {/* Players List */}
+            <FlatList
+                data={filteredData}
+                renderItem={renderPlayer}
+                keyExtractor={item => item.id}
+                showsVerticalScrollIndicator={false}
+                nestedScrollEnabled={true}   // Critical for TabView
+                contentContainerStyle={{ paddingBottom: 20 }}
+            />
         </View>
     );
 };
@@ -150,160 +151,167 @@ export default AiRiskyTeam;
 
 const styles = StyleSheet.create({
     container: {
-        padding: 16,
-        borderColor: '#ffc377',
-        borderWidth: 1,
         backgroundColor: '#fff7ed',
-        borderRadius: 18,
-        marginTop: 10,
+        borderRadius: 20,
+        borderWidth: 2,
+        borderColor: '#ffd7a3',
+        overflow: 'hidden',
+        marginVertical: 8,
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingBottom: 10,
-    },
-    playerheader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    nameContainer: {
-        flexDirection: 'row',
         alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#fff3e0',
+        borderBottomWidth: 1,
+        borderColor: '#ffd7a3',
     },
-    boxTitle: {
-        marginVertical: 10,
-    },
-    boxTitleText: {
-        fontWeight: 'bold',
-        fontSize: 16,
-        color: '#333',
-    },
-    winRateBox: {
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
-        alignItems: 'flex-end',
-    },
-    titleBox: {
+    titleSection: {
         flexDirection: 'row',
         alignItems: 'center',
     },
     title: {
-        marginLeft: 5,
-        fontWeight: 'bold',
-        fontSize: 18,
+        fontSize: 22,
+        fontWeight: '800',
         color: '#ea580c',
+        marginLeft: 8,
+    },
+    winRateSection: {
+        alignItems: 'flex-end',
+    },
+    winRate: {
+        backgroundColor: '#ea580c',
+        color: 'white',
+        paddingHorizontal: 16,
+        paddingVertical: 6,
+        borderRadius: 20,
+        fontWeight: 'bold',
+        fontSize: 15,
     },
     subtitle: {
         fontSize: 12,
-        marginTop: 5,
+        color: '#666',
+        marginTop: 4,
+    },
+    tabsContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#ffe1bc',
+        padding: 8,
+        margin: 12,
+        borderRadius: 12,
+        justifyContent: 'space-around',
+    },
+    tab: {
+        alignItems: 'center',
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 10,
+    },
+    activeTab: {
+        backgroundColor: 'white',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    tabText: {
+        fontWeight: 'bold',
         color: '#666',
     },
-    winBox: {
-        backgroundColor: '#ea580c',
-        paddingHorizontal: 20,
-        paddingVertical: 5,
-        color: 'white',
-        borderRadius: 20,
+    activeTabText: {
+        color: '#ea580c',
     },
-    stats: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        padding: 5,
-        backgroundColor: '#ffe1bc',
-        borderRadius: 10,
+    tabCredits: {
+        fontSize: 11,
+        color: '#888',
+        marginTop: 2,
+    },
+    playingXiTitle: {
+        fontSize: 17,
+        fontWeight: '700',
+        color: '#333',
+        paddingHorizontal: 16,
+        marginTop: 8,
+        marginBottom: 12,
     },
     playerContainer: {
         flexDirection: 'row',
-        alignItems: 'center',
-        padding: 5,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#ffc377',
+        backgroundColor: '#ffe8c4',
+        marginHorizontal: 16,
         marginBottom: 10,
-        backgroundColor: '#ffe1bc',
-    },
-    playerImage: {
-        width: 40,
-        height: 40,
-        borderRadius: 10,
+        padding: 12,
+        borderRadius: 14,
         borderWidth: 1,
-        borderColor: '#ffffffff',
-        // backgroundColor: '#ffc377',
+        borderColor: '#ffd7a3',
+        alignItems: 'center',
     },
     playerIconBox: {
-        borderRadius: 10,
+        backgroundColor: 'white',
+        padding: 8,
+        borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#ffc377',
-        backgroundColor: '#fff',
-        padding: 5,
+        borderColor: '#ffd7a3',
     },
     playerIcon: {
-        width: 25,
-        height: 25,
+        width: 36,
+        height: 36,
     },
     playerInfo: {
         flex: 1,
-        marginLeft: 10,
+        marginLeft: 12,
     },
-    name: {
-        fontWeight: 'bold',
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    nameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    playerName: {
         fontSize: 16,
+        fontWeight: '600',
         color: '#333',
     },
-    captainText: {
-        fontSize: 12,
-        color: '#ea580c',
+    captainBadge: {
+        color: '#d32f2f',
         fontWeight: 'bold',
-        marginLeft: 5,
+        fontSize: 13,
+        marginLeft: 6,
     },
-    roleContainer: {
-        padding: 5,
-        borderRadius: 5,
+    viceCaptainBadge: {
+        color: '#1976d2',
+        fontWeight: 'bold',
+        fontSize: 13,
+        marginLeft: 6,
+    },
+    roleBadge: {
         backgroundColor: '#f0f0f0',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
     },
     roleText: {
         fontSize: 13,
-        color: '#333',
-        fontWeight: 600,
-    },
-    scoreText: {
-        fontSize: 14,
-        color: '#333',
-    },
-    teamText: {
-        fontSize: 12,
-        color: '#666',
-    },
-    tabBox: {
-        alignItems: 'center',
-        paddingHorizontal: 15,
-        paddingVertical: 5,
-        borderRadius: 10,
-    },
-    activeTabBox: {
-        backgroundColor: 'white',
-        paddingHorizontal: 15,
-        paddingVertical: 5,
-        borderRadius: 10,
-        alignItems: 'center',
-    },
-    tabTitle: {
         fontWeight: 'bold',
-        fontSize: 14,
+        color: '#444',
     },
-    activetabTitle: {
+    creditText: {
+        fontSize: 15,
         color: '#ea580c',
-        fontWeight: 'bold',
-        fontSize: 14,
+        fontWeight: '600',
     },
-    tabSubTitle: {
-        fontSize: 12,
-        color: '#666',
+    emptyContainer: {
+        padding: 40,
+        alignItems: 'center',
     },
-    noDataText: {
+    emptyText: {
         fontSize: 16,
-        color: '#666',
-        textAlign: 'center',
-        marginVertical: 20,
+        color: '#999',
+        fontStyle: 'italic',
     },
 });

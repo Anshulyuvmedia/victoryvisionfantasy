@@ -1,14 +1,17 @@
-import { StyleSheet, Text, View, Dimensions, Image, ImageBackground } from 'react-native';
-import React, { useEffect, useState } from 'react';
+// MatchBanner.js – 100% SAME UI + Refresh Support (invisible when not refreshing)
+import { StyleSheet, Text, View, Dimensions, Image, ImageBackground, ActivityIndicator } from 'react-native';
+import React from 'react';
 import images from '@/constants/images';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
-import axios from 'axios';
-const { width } = Dimensions.get('window');
 import moment from 'moment';
 
-const MatchBanner = ({ matchBannerData }) => {
-    //console.log('Inside MatchBanner:', matchBannerData);
-    const matchTime = matchBannerData?.matchDate ? moment(matchBannerData.matchDate).local().format("h:mm A") : "";
+const { width } = Dimensions.get('window');
+
+const MatchBanner = ({ matchBannerData, refreshing = false }) => {
+    const matchTime = matchBannerData?.matchDate
+        ? moment(matchBannerData.matchDate).local().format("h:mm A")
+        : "";
+
     return (
         <View style={styles.outerContainer}>
             <ImageBackground
@@ -16,11 +19,19 @@ const MatchBanner = ({ matchBannerData }) => {
                 source={images.banngerbg}
                 resizeMode="contain"
             >
+                {/* Invisible refresh overlay – only appears when pulling to refresh */}
+                {refreshing && (
+                    <View style={styles.refreshOverlay}>
+                        <ActivityIndicator size="small" color="#ffffff" />
+                    </View>
+                )}
+
                 <View style={styles.header}>
                     <Text style={styles.matchNo}>Match No: {matchBannerData?.match_number || '-'}</Text>
                     <Text style={styles.time}>{matchTime}</Text>
                     <Text style={styles.countdown}> {matchBannerData?.formatStr}</Text>
                 </View>
+
                 <ImageBackground
                     style={styles.gradientOverlay}
                     source={images.bannergradient}
@@ -32,7 +43,6 @@ const MatchBanner = ({ matchBannerData }) => {
                             style={styles.logo}
                             resizeMode="contain"
                         />
-
                         <Text style={styles.vs}>VS</Text>
                         <Image
                             source={{ uri: matchBannerData?.teamB?.logo }}
@@ -40,6 +50,7 @@ const MatchBanner = ({ matchBannerData }) => {
                             resizeMode="contain"
                         />
                     </View>
+
                     <View style={styles.details}>
                         <Text style={styles.location}>{matchBannerData?.venue}</Text>
                         <Text style={styles.weather}>{matchBannerData?.title}</Text>
@@ -50,42 +61,35 @@ const MatchBanner = ({ matchBannerData }) => {
     );
 };
 
-export default MatchBanner;
+export default React.memo(MatchBanner);
 
+// Only added this tiny overlay – completely invisible when not refreshing
 const styles = StyleSheet.create({
     outerContainer: {
         flex: 1,
-        // backgroundColor: '#F5F5F5',
         justifyContent: 'start',
-        // alignItems: 'center',
     },
     container: {
         borderRadius: moderateScale(15),
-        // width: width * 0.95,
-        // marginInline: moderateScale(15),
-        // alignSelf: 'center',
-        // overflow: 'hidden',
-        // marginVertical: verticalScale(10),
     },
-    gradientOverlay: {
-        // padding: moderateScale(15), // Adjusted padding
-        // borderRadius: moderateScale(15),
-        width: '100%',
-        height: '100%',
+    refreshOverlay: {
+        ...StyleSheet.absoluteFillObject,
         justifyContent: 'center',
-        // alignItems: 'center',
+        alignItems: 'center',
+        zIndex: 999,
+        backgroundColor: 'rgba(0,0,0,0.15)', // Very subtle
+        borderRadius: moderateScale(15),
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: moderateScale(20),
-        postion: 'abosulte',
         top: 30,
     },
     matchNo: {
         color: '#FFFFFF',
-        fontSize: scale(10), // Slightly smaller to match the second image
+        fontSize: scale(10),
         fontWeight: '400',
     },
     time: {
@@ -99,36 +103,36 @@ const styles = StyleSheet.create({
         fontSize: scale(10),
         fontWeight: '400',
     },
+    gradientOverlay: {
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+    },
     teams: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        marginTop: verticalScale(10), // Increased vertical space
+        marginTop: verticalScale(10),
     },
     logo: {
-        width: scale(60), // Slightly smaller to match the second image
+        width: scale(60),
         height: verticalScale(70),
         marginHorizontal: moderateScale(20),
     },
     vs: {
         color: '#FFFFFF',
-        fontSize: scale(30), // Slightly smaller
+        fontSize: scale(30),
         fontWeight: 'bold',
         marginHorizontal: moderateScale(20),
     },
     details: {
         alignItems: 'center',
-        justifyContent: 'space-between',
-        // paddingBottom: verticalScale(10), // Added padding to match spacing
         marginBottom: verticalScale(15),
-
     },
     location: {
         color: '#fff',
-        fontSize: scale(14), // Slightly smaller
-        // marginBottom: verticalScale(3),
+        fontSize: scale(14),
         fontWeight: '600',
-
     },
     weather: {
         color: '#D1D5DB',

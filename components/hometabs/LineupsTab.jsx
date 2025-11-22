@@ -1,285 +1,328 @@
-import { StyleSheet, Text, View, FlatList, Image, TouchableOpacity } from 'react-native';
-import React, { useState, useCallback, useEffect } from 'react';
+import { StyleSheet, Text, View, FlatList, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import axios from 'axios';
 import images from '@/constants/images';
 
-const LineupsTab = ({ onContentHeightChange, matchID }) => {
+// Role icon mapping
+const ROLE_ICONS = {
+    WK: images.wk,
+    BAT: images.bat,
+    ALL: images.ar,
+    BOWL: images.bow,
+    AR: images.ar,
+};
+
+const getRoleIcon = (role) => {
+    const key = role?.toUpperCase();
+    return ROLE_ICONS[key] || images.ar;
+};
+
+const ROLE_TABS = [
+    { key: 'ALL', label: 'ALL' },
+    { key: 'WK', label: 'WK' },
+    { key: 'BAT', label: 'BAT' },
+    { key: 'AR', label: 'AR' },   // All-Rounder
+    { key: 'BOWL', label: 'BOWL' },
+];
+
+const LineupsTab = ({ matchID }) => {
     const [teamData, setTeamData] = useState({ teama: [], teamb: [], teams: [] });
     const [activeRole, setActiveRole] = useState('ALL');
-
-    const handleLayout = useCallback(
-        (event) => {
-            if (onContentHeightChange) {
-                const { height } = event.nativeEvent.layout;
-                onContentHeightChange(height);
-            }
-        },
-        [onContentHeightChange]
-    );
-
-    const fetchTeamPlayers = async (matchID) => {
-        try {
-            const response = await axios.get(`https://api.victoryvision.live/api/team-players`, {
-                params: { matchID },
-            });
-            const data = response.data.results[0];
-            setTeamData({
-                teama: data.squads.teama.squads.map((player) => ({
-                    id: player.player_id,
-                    name: player.name,
-                    role: player.role,
-                    team: data.squads.teams.find((team) => team.tid === data.squads.teama.team_id).abbr,
-                    image: images.playerPlaceholder,
-                    icon: images.roleIcon,
-                    score: 'N/A',
-                })),
-                teamb: data.squads.teamb.squads.map((player) => ({
-                    id: player.player_id,
-                    name: player.name,
-                    role: player.role,
-                    team: data.squads.teams.find((team) => team.tid === data.squads.teamb.team_id).abbr,
-                    image: images.playerPlaceholder,
-                    icon: images.roleIcon,
-                    score: 'N/A',
-                })),
-                teams: data.squads.teams,
-            });
-            // console.log('Processed team data:', JSON.stringify({ teama: data.squads.teama, teamb: data.squads.teamb }, null, 2));
-        } catch (error) {
-            console.error('Error fetching Match data:', error);
-        }
-    };
-
     useEffect(() => {
-        if (matchID) {
-            fetchTeamPlayers(matchID);
-        }
+        if (!matchID) return;
+
+        const fetchTeamPlayers = async () => {
+            try {
+                const { data } = await axios.get('https://api.victoryvision.live/api/team-players', {
+                    params: { matchID },
+                });
+
+                const result = data.results[0];
+                const { teama, teamb, teams } = result.squads;
+
+                const processSquad = (squad) => {
+                    const teamInfo = teams.find(t => t.tid === squad.team_id);
+                    return squad.squads.map(player => ({
+                        id: player.player_id,
+                        name: player.name,
+                        role: player.role?.toUpperCase() || 'ALL',
+                        team: teamInfo?.abbr || 'N/A',
+                        teamName: teamInfo?.title || 'Unknown Team',
+                        teamLogo: teamInfo?.thumb_url || images.teamPlaceholder,
+                        icon: getRoleIcon(player.role),
+                    }));
+                };
+
+                setTeamData({
+                    teama: processSquad(teama),
+                    teamb: processSquad(teamb),
+                    teams,
+                });
+            } catch (error) {
+                console.error('Error fetching lineups:', error);
+            }
+        };
+
+        fetchTeamPlayers();
     }, [matchID]);
 
-    const handleTabPress = (role) => {
-        setActiveRole(activeRole === role ? 'ALL' : role);
-    };
+    const handleTabPress = useCallback((role) => {
+        setActiveRole(prev => prev === role ? 'ALL' : role);
+    }, []);
 
-    const renderPlayer = ({ item }) => (
+    const filteredPlayers = useCallback((players) => {
+        return activeRole === 'ALL' ? players : players.filter(p => p.role === activeRole);
+    }, [activeRole]);
+
+    const PlayerItem = React.memo(({ item }) => (
         <View style={styles.playerContainer}>
-            <Image source={item.image} style={styles.playerImage} />
+            <View style={styles.iconBox}>
+                <Image source={item.icon} style={styles.roleIcon} resizeMode="contain" />
+            </View>
             <View style={styles.playerInfo}>
-                <View style={styles.playerheader}>
-                    <Text style={styles.name}>{item.name}</Text>
-                    <View style={styles.roleContainer}>
-                        <Text style={styles.roleText}>{item.role.toUpperCase()}</Text>
+                <View style={styles.row}>
+                    <Text style={styles.playerName}>{item.name}</Text>
+                    <View style={styles.roleBadge}>
+                        <Text style={styles.roleText}>{item.role}</Text>
                     </View>
                 </View>
-                <View style={styles.playerheader}>
-                    <View>
-                        <Text style={styles.scoreText}>{item.score}</Text>
-                        <Text style={styles.teamText}>{item.team}</Text>
-                    </View>
-                </View>
+                <Text style={styles.teamText}>{item.team}</Text>
             </View>
         </View>
-    );
+    ));
 
-    const renderTeamCard = (team, title, logoUrl) => {
-        const filteredPlayers = activeRole === 'ALL' ? team : team.filter((player) => player.role === activeRole);
+    const TeamCard = React.memo(({ players, title, logo }) => {
+        const data = filteredPlayers(players);
+
+        if (data.length === 0) {
+            return (
+                <View style={styles.teamCard}>
+                    <Text style={styles.noPlayersText}>No {activeRole === 'ALL' ? '' : activeRole} players</Text>
+                </View>
+            );
+        }
+
         return (
             <View style={styles.teamCard}>
                 <View style={styles.teamHeader}>
-                    <Image source={{ uri: logoUrl }} style={styles.teamLogo} />
+                    <Image source={{ uri: logo }} style={styles.teamLogo} defaultSource={images.teamPlaceholder} />
                     <Text style={styles.teamTitle}>{title}</Text>
                 </View>
                 <FlatList
-                    data={filteredPlayers}
-                    renderItem={renderPlayer}
-                    keyExtractor={(item) => item.id}
+                    data={data}
+                    renderItem={({ item }) => <PlayerItem item={item} />}
+                    keyExtractor={item => item.id}
+                    showsVerticalScrollIndicator={false}
+                    nestedScrollEnabled={true}
                     scrollEnabled={false}
                 />
             </View>
         );
-    };
+    });
+
+    if (teamData.teams.length === 0) {
+        return (
+            <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Loading Lineups...</Text>
+            </View>
+        );
+    }
 
     return (
-        <View style={styles.container} onLayout={handleLayout}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}        // THIS IS THE KEY
+            bounces={true}
+            overScrollMode="always"
+        >
+            {/* Header */}
             <View style={styles.header}>
-                <View style={styles.titleBox}>
-                    <Text style={styles.title}>Team Lineups</Text>
-                </View>
+                <Text style={styles.title}>Official Lineups</Text>
             </View>
+
+            {/* Filter Tabs */}
             <View style={styles.filterTabs}>
-                {['ALL', 'wk', 'bat', 'all', 'bowl'].map((role) => (
+                {ROLE_TABS.map(({ key, label }) => (
                     <TouchableOpacity
-                        key={role}
-                        style={activeRole === role ? styles.activeTabBox : styles.tabBox}
-                        onPress={() => handleTabPress(role)}
+                        key={key}  // Unique keys!
+                        style={[styles.tab, activeRole === key && styles.activeTab]}
+                        onPress={() => handleTabPress(key)}
                     >
-                        <Text style={activeRole === role ? styles.activetabTitle : styles.tabTitle}>
-                            {role === 'wk' ? 'W-K' : role === 'bat' ? 'BAT' : role === 'all' ? 'A-L' : role === 'bowl' ? 'Bowl' : 'All'}
+                        <Text style={[styles.tabText, activeRole === key && styles.activeTabText]}>
+                            {label}
                         </Text>
                     </TouchableOpacity>
                 ))}
             </View>
-            <View style={styles.boxTitle}>
-                <Text style={styles.boxTitleText}>Playing XI</Text>
-            </View>
-            {teamData.teams.length > 0 && (
-                <>
-                    {renderTeamCard(
-                        teamData.teama,
-                        teamData.teams.find((t) => t.tid === teamData.teama[0]?.team_id)?.title || 'Team A',
-                        teamData.teams.find((t) => t.tid === teamData.teama[0]?.team_id)?.thumb_url || images.teamPlaceholder
-                    )}
-                    {renderTeamCard(
-                        teamData.teamb,
-                        teamData.teams.find((t) => t.tid === teamData.teamb[0]?.team_id)?.title || 'Team B',
-                        teamData.teams.find((t) => t.tid === teamData.teamb[0]?.team_id)?.thumb_url || images.teamPlaceholder
-                    )}
-                </>
+
+            <Text style={styles.sectionTitle}>
+                Playing XI {activeRole !== 'ALL' ? `(${activeRole})` : ''}
+            </Text>
+
+            {/* Team A */}
+            {teamData.teama.length > 0 && (
+                <TeamCard
+                    players={teamData.teama}
+                    title={teamData.teama[0]?.teamName || 'Team A'}
+                    logo={teamData.teama[0]?.teamLogo}
+                />
             )}
-        </View>
+
+            {/* Team B */}
+            {teamData.teamb.length > 0 && (
+                <TeamCard
+                    players={teamData.teamb}
+                    title={teamData.teamb[0]?.teamName || 'Team B'}
+                    logo={teamData.teamb[0]?.teamLogo}
+                />
+            )}
+
+            <View style={{ height: 100 }} />
+        </ScrollView>
     );
 };
 
-export default LineupsTab;
+export default React.memo(LineupsTab);
 
 const styles = StyleSheet.create({
     container: {
+        flex: 1,
+        backgroundColor: '#fff',
         padding: 16,
-        backgroundColor: '#f0fdf4',
-        borderRadius: 18,
-        marginTop: 10,
-        borderColor: '#96e6b0',
-        borderWidth: 1,
     },
     header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingBottom: 10,
-    },
-    playerheader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    boxTitle: {
-        marginVertical: 10,
-    },
-    boxTitleText: {
-        fontWeight: 'bold',
-        fontSize: 16,
-        color: '#333',
-    },
-    titleBox: {
-        flexDirection: 'row',
-        alignItems: 'center',
+        marginBottom: 16,
     },
     title: {
-        marginLeft: 5,
+        fontSize: 24,
+        fontWeight: '800',
+        color: '#1a1a1a',
+    },
+    filterTabs: {
+        flexDirection: 'row',
+        backgroundColor: '#f0fdf4',
+        padding: 8,
+        borderRadius: 16,
+        marginBottom: 16,
+        justifyContent: 'space-around',
+    },
+    tab: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 12,
+    },
+    activeTab: {
+        backgroundColor: '#16a34a',
+    },
+    tabText: {
         fontWeight: 'bold',
+        color: '#333',
+    },
+    activeTabText: {
+        color: 'white',
+    },
+    sectionTitle: {
         fontSize: 18,
-        color: 'green',
+        fontWeight: '700',
+        color: '#333',
+        marginBottom: 16,
     },
     teamCard: {
+        backgroundColor: '#f0fdf4',
+        borderRadius: 16,
+        padding: 16,
         marginBottom: 20,
-        padding: 10,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#96e6b0',
-        backgroundColor: '#d8fae3',
+        borderWidth: 2,
+        borderColor: '#86efac',
     },
     teamHeader: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 10,
+        marginBottom: 16,
     },
     teamLogo: {
-        width: 40,
-        height: 40,
-        borderRadius: 5,
+        width: 48,
+        height: 48,
+        borderRadius: 50,
+        backgroundColor: '#e0e0e0',
     },
     teamTitle: {
+        fontSize: 20,
         fontWeight: 'bold',
-        fontSize: 18,
-        marginLeft: 10,
-        color: '#333',
+        color: '#1a1a1a',
+        marginLeft: 12,
     },
     playerContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 5,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#96e6b0',
+        backgroundColor: 'white',
+        padding: 12,
+        borderRadius: 12,
         marginBottom: 10,
-        backgroundColor: '#fff',
-    },
-    playerImage: {
-        width: 60,
-        height: 60,
-        borderRadius: 10,
         borderWidth: 1,
-        borderColor: '#96e6b0',
-        backgroundColor: '#96e6b0',
+        borderColor: '#d0e8d5',
     },
-    playerIconBox: {
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: '#96e6b0',
+    iconBox: {
+        width: 48,
+        height: 48,
         backgroundColor: '#fff',
-        padding: 5,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#86efac',
     },
-    playerIcon: {
-        width: 25,
-        height: 25,
+    roleIcon: {
+        width: 36,
+        height: 36,
     },
     playerInfo: {
         flex: 1,
-        marginLeft: 10,
+        marginLeft: 12,
     },
-    name: {
-        fontWeight: 'bold',
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    playerName: {
         fontSize: 16,
-        color: '#333',
+        fontWeight: '600',
+        color: '#1a1a1a',
     },
-    roleContainer: {
-        padding: 5,
-        borderRadius: 5,
+    roleBadge: {
+        backgroundColor: '#e6f7ee',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: '#86efac',
     },
     roleText: {
         fontSize: 12,
-        color: '#333',
-    },
-    scoreText: {
-        fontSize: 14,
-        color: '#333',
+        fontWeight: 'bold',
+        color: '#16a34a',
     },
     teamText: {
-        fontSize: 12,
+        fontSize: 13,
         color: '#666',
+        marginTop: 4,
     },
-    filterTabs: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginBottom: 10,
+    noPlayersText: {
+        textAlign: 'center',
+        color: '#999',
+        fontStyle: 'italic',
+        padding: 20,
     },
-    tabBox: {
-        alignItems: 'center',
-        paddingHorizontal: 15,
-        paddingVertical: 5,
-        borderRadius: 10,
-    },
-    activeTabBox: {
-        backgroundColor: 'white',
-        paddingHorizontal: 15,
-        paddingVertical: 5,
-        borderRadius: 10,
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    tabTitle: {
-        fontWeight: 'bold',
-        fontSize: 14,
-    },
-    activetabTitle: {
-        color: 'green',
-        fontWeight: 'bold',
-        fontSize: 14,
+    loadingText: {
+        fontSize: 16,
+        color: '#666',
     },
 });

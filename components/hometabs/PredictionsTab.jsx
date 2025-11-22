@@ -1,98 +1,85 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import axios from 'axios';
 
+const PredictionsTab = ({ matchID }) => {
+    const [apiData, setApiData] = useState({});
 
-const PredictionsTab = ({ onContentHeightChange ,matchID }) => {
-    const [matchId, setmatchId] = useState('');
-    const [apiData, setapiData] = useState({});
-
-    const handleLayout = useCallback(
-        (event) => {
-            if (onContentHeightChange) {
-                const { height } = event.nativeEvent.layout;
-                onContentHeightChange(height); // Pass the measured height to the parent
-            }
-        },
-        [onContentHeightChange]
-    );
-
-    // Fetch Match Predictions Data here by matching  Match ID..............
     useEffect(() => {
-        const fetchMatchPredictions = async (matchID) => {
-            console.log(matchID);
+        if (!matchID) return;
+
+        const fetchData = async () => {
             try {
-                const response = await axios.get(`https://api.victoryvision.live/api/get-matchprediction`, {
+                const res = await axios.get('https://api.victoryvision.live/api/get-matchprediction', {
                     params: { matchID }
                 });
-                // console.log(`Response: ${JSON.stringify(response.data, null, 2)}`);
-                if (response && response.data) {
-                    setapiData(response.data.data);
-                }
-            } catch (error) {
-                console.error('Error fetching Match Predictions data:', error);
+                if (res?.data?.data) setApiData(res.data.data);
+            } catch (err) {
+                console.error('Predictions error:', err);
             }
         };
-        fetchMatchPredictions(matchID);
-    }, []);
+        fetchData();
+    }, [matchID]);
+
     return (
-        <View style={styles.container} onLayout={handleLayout}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}        // THIS IS THE KEY
+            bounces={true}
+            overScrollMode="always"
+        >
             <Text style={styles.header}>Match Predictions</Text>
-            <View style={styles.matchsection}>
-                <LinearGradient
-                    colors={['#9dc5f7', '#fff']}
-                    style={styles.gradientBorder}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                >
-                    <TouchableOpacity style={styles.card}>
-                        <Text>Toss Winner</Text>
-                        <Text style={styles.highlighttext}>{apiData?.tossWinner}</Text>
-                        <Text>{apiData?.tossProbability}% Probability</Text>
-                    </TouchableOpacity>
+
+            <View style={styles.row}>
+                {/* Toss Winner */}
+                <LinearGradient colors={['#9dc5f7', '#fff']} style={styles.gradient}>
+                    <View style={styles.cardBlue}>
+                        <Text style={styles.label}>Toss Winner</Text>
+                        <Text style={styles.valueBlue}>{apiData?.tossWinner || '—'}</Text>
+                        <Text style={styles.prob}>{apiData?.tossProbability ? `${apiData.tossProbability}%` : '—'}</Text>
+                    </View>
                 </LinearGradient>
-                <LinearGradient
-                    colors={['#df6a3a', '#fff']}
-                    style={styles.gradientBorder}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                >
-                    <TouchableOpacity style={styles.cardOrange}>
-                        <Text>First Innings Score</Text>
-                        <Text style={styles.highlighttextorange}>{apiData?.predictedScore}</Text>
-                        <Text>Predicted Range</Text>
-                    </TouchableOpacity>
+
+                {/* First Innings */}
+                <LinearGradient colors={['#df6a3a', '#fff']} style={styles.gradient}>
+                    <View style={styles.cardOrange}>
+                        <Text style={styles.label}>1st Innings Score</Text>
+                        <Text style={styles.valueOrange}>{apiData?.predictedScore || '—'}</Text>
+                        <Text style={styles.small}>Predicted</Text>
+                    </View>
                 </LinearGradient>
             </View>
 
-            {apiData?.topBatsmen && (
+            {/* Top Batsmen */}
+            {apiData?.topBatsmen?.length > 0 && (
                 <>
                     <Text style={styles.subheader}>Top Batsman Predictions</Text>
-                    <View style={styles.section}>
-                        {apiData.topBatsmen.map((batsman, index) => (
-                            <View style={styles.cardGray} key={index}>
-                                <Text>{batsman.name}</Text>
-                                <Text style={styles.highlight}>{batsman.points}+ Runs</Text>
-                            </View>
-                        ))}
-                    </View>
+                    {apiData.topBatsmen.map((p, i) => (
+                        <View key={i} style={styles.playerCard}>
+                            <Text style={styles.playerName}>{p.name}</Text>
+                            <Text style={styles.badge}>{p.points}+ Runs</Text>
+                        </View>
+                    ))}
                 </>
             )}
-            {apiData?.topBowlers && (
+
+            {/* Top Bowlers */}
+            {apiData?.topBowlers?.length > 0 && (
                 <>
                     <Text style={styles.subheader}>Top Bowler Predictions</Text>
-                    <View style={styles.section}>
-                        {apiData.topBowlers.map((bowler, index) => (
-                            <View style={styles.cardGray} key={index}>
-                                <Text>{bowler.name}</Text>
-                                <Text style={styles.highlight}>{bowler.wickets}+ Wickets</Text>
-                            </View>
-                        ))}
-                    </View>
+                    {apiData.topBowlers.map((p, i) => (
+                        <View key={i} style={styles.playerCard}>
+                            <Text style={styles.playerName}>{p.name}</Text>
+                            <Text style={styles.badge}>{p.wickets}+ Wickets</Text>
+                        </View>
+                    ))}
                 </>
             )}
-        </View>
+
+        </ScrollView>
     );
 };
 
@@ -100,83 +87,77 @@ export default PredictionsTab;
 
 const styles = StyleSheet.create({
     container: {
-        // flex: 1,
+        flex: 1,                    // Critical
         backgroundColor: '#fff',
-        padding: 15,
-        borderRadius: 18,
-        marginTop: 10,
     },
-    gradientBorder: {
-        flex: 1,
-        padding: 1,
-        borderRadius: 20,
+    content: {
+        padding: 16,
+        paddingBottom: 40,
     },
     header: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 10,
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#222',
+        marginBottom: 16,
     },
-    subheader: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginVertical: 10,
-    },
-    matchsection: {
+    row: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 15,
+        gap: 12,
+        marginBottom: 20,
     },
-    section: {
-        flexDirection: 'col',
-        justifyContent: 'space-between',
-        marginBottom: 15,
-
-    },
-    card: {
-        backgroundColor: '#e6f0fa',
-        padding: 15,
+    gradient: {
+        flex: 1,
+        padding: 1.5,
         borderRadius: 20,
-        width: '95%',
-        alignItems: 'start',
+    },
+    cardBlue: {
+        backgroundColor: '#e6f4ff',
+        padding: 16,
+        borderRadius: 18,
+        alignItems: 'center',
     },
     cardOrange: {
-        backgroundColor: '#ffe6cc',
-        padding: 15,
-        borderRadius: 20,
-        width: '100%',
-        alignItems: 'start',
-    },
-    cardGray: {
-        backgroundColor: '#f0f0f0',
-        padding: 10,
-        borderRadius: 8,
-        width: '100%',
+        backgroundColor: '#fff4e6',
+        padding: 16,
+        borderRadius: 18,
         alignItems: 'center',
-        marginBottom: 10,
+    },
+    label: { fontSize: 13, color: '#666', marginBottom: 4 },
+    valueBlue: { fontSize: 18, fontWeight: 'bold', color: '#1e88e5' },
+    valueOrange: { fontSize: 18, fontWeight: 'bold', color: '#ef6c00' },
+    prob: { fontSize: 13, color: '#444', marginTop: 4 },
+    small: { fontSize: 12, color: '#888', marginTop: 4 },
+    subheader: {
+        fontSize: 17,
+        fontWeight: '700',
+        color: '#222',
+        marginTop: 20,
+        marginBottom: 12,
+    },
+    playerCard: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#f9f9f9',
+        padding: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#eee',
+        marginBottom: 10,
+    },
+    playerName: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#333',
+    },
+    badge: {
+        backgroundColor: '#fff',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
         borderRadius: 20,
-        paddingInline: 10,
-
-    },
-    highlight: {
-        fontSize: 16,
+        borderWidth: 1,
+        borderColor: '#ddd',
         fontWeight: 'bold',
-        marginVertical: 5,
-        backgroundColor: 'white',
-        paddingInline: 10,
-        borderRadius: 10,
-    },
-    highlighttext: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginVertical: 5,
-        color: '#4a93f0',
-    },
-    highlighttextorange: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginVertical: 5,
-        color: '#df6a3a',
+        color: '#2c3e50',
     },
 });

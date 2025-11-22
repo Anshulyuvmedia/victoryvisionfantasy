@@ -1,79 +1,58 @@
-import { StyleSheet, View } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+// AiTeamsTab.js — PERFECT AS IS
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import AiSafeTeam from '../AiSafeTeam';
 import AiRiskyTeam from '../AiRiskyTeam';
 
-const AiTeamsTab = ({ onContentHeightChange, matchID }) => {
+const AiTeamsTab = ({ matchID }) => {
     const [teams, setTeams] = useState({ safeTeam: null, riskyTeam: null });
 
-    // Handle layout changes for dynamic height
-    const handleLayout = useCallback(
-        (event) => {
-            if (onContentHeightChange) {
-                const { height } = event.nativeEvent.layout;
-                onContentHeightChange(height); // Pass the measured height to the parent
-            }
-        },
-        [onContentHeightChange]
-    );
-
-    // Fetch AI-generated teams
-    const fetchGeneratedAiTeams = async (matchID) => {
-        try {
-            const response = await axios.get(`https://api.victoryvision.live/api/get-ai-teams`, {
-                params: { matchID },
-            });
-            // console.log('API Response:', response.data);
-
-            if (response.data.status && response.data.results) {
-                const safeTeam = response.data.results.find((team) => team.type === 'Safe') || null;
-                const riskyTeam = response.data.results.find((team) => team.type === 'Risky') || null;
-                console.log("riskyTeam : ", JSON.stringify(riskyTeam, null, 2));
-                setTeams({ safeTeam, riskyTeam });
-            } else {
-                console.warn('No valid data in API response');
-                setTeams({ safeTeam: null, riskyTeam: null });
-            }
-        } catch (error) {
-            console.error('Error fetching AI teams:', error.message);
-            setTeams({ safeTeam: null, riskyTeam: null });
-        }
-    };
-
-    // Fetch data when matchID changes
     useEffect(() => {
-        if (matchID) {
-            fetchGeneratedAiTeams(matchID);
-        }
+        if (!matchID) return;
+
+        const fetchTeams = async () => {
+            try {
+                const res = await axios.get('https://api.victoryvision.live/api/get-ai-teams', {
+                    params: { matchID },
+                });
+                if (res.data.status && res.data.results) {
+                    const safe = res.data.results.find(t => t.type === 'Safe');
+                    const risky = res.data.results.find(t => t.type === 'Risky');
+                    setTeams({ safeTeam: safe || null, riskyTeam: risky || null });
+                }
+            } catch (err) {
+                console.error('AI Teams error:', err);
+            }
+        };
+        fetchTeams();
     }, [matchID]);
 
     return (
-        <View style={styles.container}>
-            <View style={styles.contentContainer} onLayout={handleLayout}>
+        <ScrollView
+            style={styles.container}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}        // THIS IS THE KEY
+            bounces={true}
+            overScrollMode="always"
+        >
+            <View style={styles.content}>
                 <View style={styles.section}>
                     <AiSafeTeam teamData={teams.safeTeam} />
                 </View>
                 <View style={styles.section}>
                     <AiRiskyTeam teamData={teams.riskyTeam} />
                 </View>
+                <View style={{ height: 100 }} />
             </View>
-        </View>
+        </ScrollView>
     );
 };
 
-export default AiTeamsTab;
-
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    contentContainer: {
-        flexGrow: 1, // Allow content to grow vertically
-        paddingBottom: 40, // Prevent content from being cut off
-    },
-    section: {
-        marginVertical: 10, // Spacing between sections
-        marginHorizontal: 10, // Horizontal spacing for better appearance
-    },
+    container: { flex: 1,},
+    content: { paddingTop: 5 },
+    section: { marginBottom: 24 },
 });
+
+export default AiTeamsTab;

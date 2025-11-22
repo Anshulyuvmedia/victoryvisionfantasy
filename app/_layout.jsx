@@ -44,7 +44,7 @@ function RootLayoutNav() {
     const checkAuth = async () => {
       try {
         const token = await AsyncStorage.getItem('userToken');
-        console.log(token);
+        // console.log(token);
 
         if (token) router.replace('/');
         else router.replace('/(auth)/login');
@@ -58,7 +58,7 @@ function RootLayoutNav() {
 
     checkAuth();
   }, []);
-  console.log("Auth state →", { loading, checkingAuth });
+  // console.log("Auth state →", { loading, checkingAuth });
 
   if (loading || checkingAuth) {
     // console.log('loading', loading, 'checkingAuth', checkingAuth);
