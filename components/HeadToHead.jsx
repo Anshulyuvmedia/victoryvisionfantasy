@@ -3,7 +3,47 @@ import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import { Entypo } from '@expo/vector-icons';
 
-const HeadToHead = () => {
+const HeadToHead = ({ headToHeadStats }) => {
+    if (!headToHeadStats) return null;
+    // console.log('Inside headToHeadStats:', headToHeadStats);
+    const getInitials = (name) => {
+        if (!name) return '';
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .toUpperCase();
+    }
+    const getHeadToHeadStats = (data) => {
+        const { headToHeadStats: matches, teamA, teamB } = data;
+
+        let teamAWins = 0;
+        let teamBWins = 0;
+
+        const safeMatches = Array.isArray(matches) ? matches : [];
+
+        safeMatches.forEach((match) => {
+            if (match.winner === teamA) teamAWins++;
+            else if (match.winner === teamB) teamBWins++;
+        });
+
+        return {
+            total: safeMatches.length,
+            teamAName: teamA,
+            teamBName: teamB,
+            teamAWins,
+            teamBWins,
+        };
+    };
+    const {
+        total,
+        teamAName,
+        teamBName,
+        teamAWins,
+        teamBWins
+    } = getHeadToHeadStats(headToHeadStats);
+
+
     return (
         <View style={styles.outerContainer}>
             <LinearGradient
@@ -20,16 +60,16 @@ const HeadToHead = () => {
                         </View>
                         <View style={styles.contentbox}>
                             <View style={styles.teamContainer}>
-                                <Text style={styles.stat1}>20 </Text>
-                                <Text style={styles.team}>MI Wins</Text>
+                                <Text style={styles.stat1}>{teamAWins}</Text>
+                                <Text style={styles.team}>{getInitials(teamAName)} Wins</Text>
                             </View>
                             <View style={styles.teamContainer}>
                                 <Text style={styles.totaltitle}>Total Matches</Text>
-                                <Text style={styles.totaltitle}>34</Text>
+                                <Text style={styles.totaltitle}>{total}</Text>
                             </View>
                             <View style={styles.teamContainer}>
-                                <Text style={styles.stat2}>15</Text>
-                                <Text style={styles.team}>CSK Wins</Text>
+                                <Text style={styles.stat2}>{teamBWins}</Text>
+                                <Text style={styles.team}>{getInitials(teamBName)} Wins</Text>
                             </View>
                         </View>
                     </View>

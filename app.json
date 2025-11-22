@@ -4,6 +4,7 @@
     "slug": "victoryvision",
     "version": "1.0.0",
     "orientation": "portrait",
+    "jsEngine": "hermes",
     "icon": "./assets/images/applogo.png",
     "scheme": "victoryvision",
     "userInterfaceStyle": "automatic",
@@ -13,6 +14,13 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "extra": {
+      "API_URL": "https://api.victoryvision.live",
+      "router": {},
+      "eas": {
+        "projectId": "0fea2570-615e-47dc-bc13-6b7189f13e8f"
+      }
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -21,6 +29,7 @@
         "foregroundImage": "./assets/images/applogo.png",
         "backgroundColor": "#ffffff"
       },
+      "usesCleartextTraffic": true,
       "edgeToEdgeEnabled": true,
       "package": "com.victory.vision"
     },
@@ -35,12 +44,6 @@
     ],
     "experiments": {
       "typedRoutes": true
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "813f904e-d628-42db-8db5-aef623e13980"
-      }
     }
   }
 }

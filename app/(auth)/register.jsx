@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { moderateScale, verticalScale, scale } from 'react-native-size-matters';
+import axios from 'axios';
 
 const RegisterScreen = () => {
     const router = useRouter();
@@ -19,109 +20,47 @@ const RegisterScreen = () => {
         return re.test(email);
     };
 
-    const checkPhoneExists = async (phone) => {
-        try {
-            const registeredPhones = await AsyncStorage.getItem('registeredPhones');
-            const phoneList = registeredPhones ? JSON.parse(registeredPhones) : [];
-            return phoneList.includes(phone);
-        } catch (error) {
-            console.error('Error checking phone number:', error);
-            Alert.alert('Error', 'Failed to check phone number. Please try again.');
-            return false;
-        }
-    };
-
-    const addPhoneToStorage = async (phone) => {
-        try {
-            const registeredPhones = await AsyncStorage.getItem('registeredPhones');
-            const phoneList = registeredPhones ? JSON.parse(registeredPhones) : [];
-            phoneList.push(phone);
-            await AsyncStorage.setItem('registeredPhones', JSON.stringify(phoneList));
-        } catch (error) {
-            console.error('Error saving phone number:', error);
-            Alert.alert('Error', 'Failed to save phone number. Please try again.');
-        }
-    };
-
-    const generateOtp = async () => {
-        if (!name.trim()) {
-            Alert.alert('Error', 'Please enter your name.');
-            return;
-        }
-        if (!phoneNumber || phoneNumber.length !== 10) {
-            Alert.alert('Error', 'Please enter a valid 10-digit phone number.');
-            return;
-        }
-        if (!email || !validateEmail(email)) {
-            Alert.alert('Error', 'Please enter a valid email address.');
-            return;
-        }
-
-        setIsLoading(true);
-        const phoneExists = await checkPhoneExists(phoneNumber);
-        if (phoneExists) {
-            setIsLoading(false);
-            Alert.alert(
-                'Error',
-                'This phone number is already registered. Please log in.',
-                [
-                    {
-                        text: 'Go to Login',
-                        onPress: () => router.push('/login'),
-                    },
-                    {
-                        text: 'Cancel',
-                        style: 'cancel',
-                    },
-                ]
-            );
-            return;
-        }
-
-        const otpValue = Math.floor(1000 + Math.random() * 9000).toString();
-        setGeneratedOtp(otpValue);
-        setIsOtpSent(true);
-        setTimeout(() => {
-            Alert.alert('OTP Sent', `Your OTP is: ${otpValue} (Demo only)`);
-            setIsLoading(false);
-        }, 1000); // Simulate network delay
-    };
 
     const handleRegister = async () => {
-        if (!isOtpSent) {
-            Alert.alert('Error', 'Please send OTP first.');
-            return;
-        }
-        if (!otp || otp.length !== 4) {
-            Alert.alert('Error', 'Please enter a valid 4-digit OTP.');
-            return;
-        }
+        try {
+            setIsLoading(true);
 
-        setIsLoading(true);
-        
-        if ( otp === generatedOtp) {
-            try {
-                // Store user session
-                await AsyncStorage.setItem('userToken', 'loggedIn');
-                // Store user data for profile
-                const userData = {
-                    name: name.trim(),
-                    email: email.trim(),
-                    profileImage: null,
-                };
-                await AsyncStorage.setItem('userData', JSON.stringify(userData));
-                // Add phone number to registered phones
-                await addPhoneToStorage(phoneNumber);
-                router.replace('/(root)/(tabs)/');
-            } catch (error) {
-                Alert.alert('Error', 'Failed to register. Please try again.');
-                console.error('Registration error:', error);
+            const response = await axios.post('https://api.victoryvision.live/api/createUser', {
+                name,
+                email,
+                phoneNumber,
+            });
+
+            if (response.status === 201) {
+                Alert.alert('Success', 'User registered successfully!');
+            } else {
+                Alert.alert('Error', 'Unexpected response from server.');
             }
-        } else {
-            Alert.alert('Error', 'Invalid phone number or OTP. Please check and try again.');
+        } catch (error) {
+            console.error('Registration error:', error);
+
+            if (error.response) {
+                const { status, data } = error.response;
+
+                // 🧩 Handle specific backend responses
+                if (status === 409) {
+                    Alert.alert('User Already Exists', data.msg || 'This email or phone number is already registered.');
+                } else if (status === 400) {
+                    Alert.alert('Missing Fields', data.msg || 'Please fill all required fields.');
+                } else if (status === 500) {
+                    Alert.alert('Server Error', 'Something went wrong on the server. Please try again later.');
+                } else {
+                    Alert.alert('Error', data.msg || 'Something went wrong. Please try again.');
+                }
+            } else {
+                // 🧠 No response (network error, timeout, etc.)
+                Alert.alert('Network Error', 'Could not reach the server. Please check your internet connection.');
+            }
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
+    
 
     return (
         <View style={styles.container}>
@@ -132,6 +71,7 @@ const RegisterScreen = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Enter Your Name"
+                placeholderTextColor="#666"
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -142,6 +82,7 @@ const RegisterScreen = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Enter Phone Number (e.g., 9876543210)"
+                placeholderTextColor="#666"
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
                 keyboardType="phone-pad"
@@ -152,46 +93,22 @@ const RegisterScreen = () => {
             <TextInput
                 style={styles.input}
                 placeholder="Enter Email"
+                placeholderTextColor="#666"
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 maxLength={100}
             />
-
-            {/* OTP Input or Send OTP Button */}
-            {!isOtpSent ? (
-                <TouchableOpacity
-                    style={[styles.button, isLoading && styles.buttonDisabled]}
-                    onPress={generateOtp}
-                    disabled={isLoading}
-                >
-                    <Text style={styles.buttonText}>
-                        {isLoading ? 'Sending...' : 'Send OTP'}
-                    </Text>
-                </TouchableOpacity>
-            ) : (
-                <>
-                    <Text style={styles.label}>OTP: {generatedOtp}</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Enter OTP"
-                        value={otp}
-                        onChangeText={setOtp}
-                        keyboardType="numeric"
-                        maxLength={4}
-                    />
-                    <TouchableOpacity
-                        style={[styles.button, isLoading && styles.buttonDisabled]}
-                        onPress={handleRegister}
-                        disabled={isLoading}
-                    >
-                        <Text style={styles.buttonText}>
-                            {isLoading ? 'Registering...' : 'Verify OTP & Register'}
-                        </Text>
-                    </TouchableOpacity>
-                </>
-            )}
+            <TouchableOpacity
+                style={[styles.button, isLoading && styles.buttonDisabled]}
+                onPress={handleRegister}
+                disabled={isLoading}
+            >
+                <Text style={styles.buttonText}>
+                    {isLoading ? 'Registering...' : 'Register Now'}
+                </Text>
+            </TouchableOpacity>
 
             {/* Login Link */}
             <TouchableOpacity onPress={() => router.push('/login')}>

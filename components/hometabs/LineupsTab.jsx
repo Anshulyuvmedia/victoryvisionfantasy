@@ -1,50 +1,73 @@
 import { StyleSheet, Text, View, FlatList, Image, TouchableOpacity } from 'react-native';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import axios from 'axios';
 import images from '@/constants/images';
 
-const LineupsTab = ({ onContentHeightChange }) => {
+const LineupsTab = ({ onContentHeightChange, matchID }) => {
+    const [teamData, setTeamData] = useState({ teama: [], teamb: [], teams: [] });
+    const [activeRole, setActiveRole] = useState('ALL');
+
     const handleLayout = useCallback(
-                (event) => {
-                    if (onContentHeightChange) {
-                        const { height } = event.nativeEvent.layout;
-                        onContentHeightChange(height); // Pass the measured height to the parent
-                    }
-                },
-                [onContentHeightChange]
-            );
+        (event) => {
+            if (onContentHeightChange) {
+                const { height } = event.nativeEvent.layout;
+                onContentHeightChange(height);
+            }
+        },
+        [onContentHeightChange]
+    );
 
-    const [activeRole, setActiveRole] = useState('ALL'); // Default to show all players
-
-    const teamData = [
-        { id: '1', name: 'MS Dhoni', role: 'WK', score: '8.5cr', team: 'CSK', icon: images.wk, image: images.playerPlaceholder },
-        { id: '2', name: 'Virat Kohli', role: 'BAT', score: '9cr', team: 'RCB', icon: images.bat, image: images.playerPlaceholder },
-        { id: '3', name: 'Rohit Sharma', role: 'BAT', score: '8cr', team: 'MI', icon: images.bat, image: images.playerPlaceholder },
-        { id: '4', name: 'KL Rahul', role: 'BAT', score: '7.5cr', team: 'LSG', icon: images.bat, image: images.playerPlaceholder },
-        { id: '5', name: 'Suryakumar Yadav', role: 'BAT', score: '6.5cr', team: 'MI', icon: images.bat, image: images.playerPlaceholder },
-        { id: '6', name: 'Ravindra Jadeja', role: 'AR', score: '7cr', team: 'CSK', icon: images.ar, image: images.playerPlaceholder },
-        { id: '7', name: 'Hardik Pandya', role: 'AR', score: '6.5cr', team: 'MI', icon: images.ar, image: images.playerPlaceholder },
-        { id: '8', name: 'Jasprit Bumrah', role: 'BOW', score: '9cr', team: 'MI', icon: images.bow, image: images.playerPlaceholder },
-        { id: '9', name: 'Yuzvendra Chahal', role: 'BOW', score: '6cr', team: 'RR', icon: images.bow, image: images.playerPlaceholder },
-        { id: '10', name: 'Mohammed Shami', role: 'BOW', score: '6.5cr', team: 'GT', icon: images.bow, image: images.playerPlaceholder },
-        { id: '11', name: 'Arshdeep Singh', role: 'BOW', score: '5.5cr', team: 'PBKS', icon: images.bow, image: images.playerPlaceholder },
-    ];
-
-    const filteredData = activeRole === 'ALL' ? teamData : teamData.filter((item) => item.role === activeRole);
-
-    const handleTabPress = (role) => {
-        setActiveRole(activeRole === role ? 'ALL' : role); // Toggle to ALL if same role is clicked
+    const fetchTeamPlayers = async (matchID) => {
+        try {
+            const response = await axios.get(`https://api.victoryvision.live/api/team-players`, {
+                params: { matchID },
+            });
+            const data = response.data.results[0];
+            setTeamData({
+                teama: data.squads.teama.squads.map((player) => ({
+                    id: player.player_id,
+                    name: player.name,
+                    role: player.role,
+                    team: data.squads.teams.find((team) => team.tid === data.squads.teama.team_id).abbr,
+                    image: images.playerPlaceholder,
+                    icon: images.roleIcon,
+                    score: 'N/A',
+                })),
+                teamb: data.squads.teamb.squads.map((player) => ({
+                    id: player.player_id,
+                    name: player.name,
+                    role: player.role,
+                    team: data.squads.teams.find((team) => team.tid === data.squads.teamb.team_id).abbr,
+                    image: images.playerPlaceholder,
+                    icon: images.roleIcon,
+                    score: 'N/A',
+                })),
+                teams: data.squads.teams,
+            });
+            // console.log('Processed team data:', JSON.stringify({ teama: data.squads.teama, teamb: data.squads.teamb }, null, 2));
+        } catch (error) {
+            console.error('Error fetching Match data:', error);
+        }
     };
 
-    const renderItem = ({ item }) => (
+    useEffect(() => {
+        if (matchID) {
+            fetchTeamPlayers(matchID);
+        }
+    }, [matchID]);
+
+    const handleTabPress = (role) => {
+        setActiveRole(activeRole === role ? 'ALL' : role);
+    };
+
+    const renderPlayer = ({ item }) => (
         <View style={styles.playerContainer}>
             <Image source={item.image} style={styles.playerImage} />
             <View style={styles.playerInfo}>
                 <View style={styles.playerheader}>
-                    <View>
-                        <Text style={styles.name}>{item.name}</Text>
-                    </View>
+                    <Text style={styles.name}>{item.name}</Text>
                     <View style={styles.roleContainer}>
-                        <Text style={styles.roleText}>{item.role}</Text>
+                        <Text style={styles.roleText}>{item.role.toUpperCase()}</Text>
                     </View>
                 </View>
                 <View style={styles.playerheader}>
@@ -52,13 +75,28 @@ const LineupsTab = ({ onContentHeightChange }) => {
                         <Text style={styles.scoreText}>{item.score}</Text>
                         <Text style={styles.teamText}>{item.team}</Text>
                     </View>
-                    <View style={styles.playerIconBox}>
-                        <Image source={item.icon} style={styles.playerIcon} resizeMode="contain" />
-                    </View>
                 </View>
             </View>
         </View>
     );
+
+    const renderTeamCard = (team, title, logoUrl) => {
+        const filteredPlayers = activeRole === 'ALL' ? team : team.filter((player) => player.role === activeRole);
+        return (
+            <View style={styles.teamCard}>
+                <View style={styles.teamHeader}>
+                    <Image source={{ uri: logoUrl }} style={styles.teamLogo} />
+                    <Text style={styles.teamTitle}>{title}</Text>
+                </View>
+                <FlatList
+                    data={filteredPlayers}
+                    renderItem={renderPlayer}
+                    keyExtractor={(item) => item.id}
+                    scrollEnabled={false}
+                />
+            </View>
+        );
+    };
 
     return (
         <View style={styles.container} onLayout={handleLayout}>
@@ -66,19 +104,37 @@ const LineupsTab = ({ onContentHeightChange }) => {
                 <View style={styles.titleBox}>
                     <Text style={styles.title}>Team Lineups</Text>
                 </View>
-                <Text>IPL 2025</Text>
+            </View>
+            <View style={styles.filterTabs}>
+                {['ALL', 'wk', 'bat', 'all', 'bowl'].map((role) => (
+                    <TouchableOpacity
+                        key={role}
+                        style={activeRole === role ? styles.activeTabBox : styles.tabBox}
+                        onPress={() => handleTabPress(role)}
+                    >
+                        <Text style={activeRole === role ? styles.activetabTitle : styles.tabTitle}>
+                            {role === 'wk' ? 'W-K' : role === 'bat' ? 'BAT' : role === 'all' ? 'A-L' : role === 'bowl' ? 'Bowl' : 'All'}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
             </View>
             <View style={styles.boxTitle}>
-                <Text style={styles.boxTitleText}>
-                    Playing XI 
-                </Text>
+                <Text style={styles.boxTitleText}>Playing XI</Text>
             </View>
-            <FlatList
-                data={filteredData}
-                renderItem={renderItem}
-                keyExtractor={(item) => item.id}
-                scrollEnabled={false} // Disable FlatList scrolling to rely on parent TabView
-            />
+            {teamData.teams.length > 0 && (
+                <>
+                    {renderTeamCard(
+                        teamData.teama,
+                        teamData.teams.find((t) => t.tid === teamData.teama[0]?.team_id)?.title || 'Team A',
+                        teamData.teams.find((t) => t.tid === teamData.teama[0]?.team_id)?.thumb_url || images.teamPlaceholder
+                    )}
+                    {renderTeamCard(
+                        teamData.teamb,
+                        teamData.teams.find((t) => t.tid === teamData.teamb[0]?.team_id)?.title || 'Team B',
+                        teamData.teams.find((t) => t.tid === teamData.teamb[0]?.team_id)?.thumb_url || images.teamPlaceholder
+                    )}
+                </>
+            )}
         </View>
     );
 };
@@ -111,11 +167,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#333',
     },
-    winRateBox: {
-        flexDirection: 'column', // Fixed typo from 'col'
-        justifyContent: 'flex-end',
-        alignItems: 'flex-end',
-    },
     titleBox: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -126,24 +177,29 @@ const styles = StyleSheet.create({
         fontSize: 18,
         color: 'green',
     },
-    subtitle: {
-        fontSize: 12,
-        marginTop: 5,
-        color: '#666',
-    },
-    winBox: {
-        backgroundColor: 'green',
-        paddingHorizontal: 20,
-        paddingVertical: 5,
-        color: 'white',
-        borderRadius: 20,
-    },
-    stats: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        padding: 5,
-        backgroundColor: '#d8fae3',
+    teamCard: {
+        marginBottom: 20,
+        padding: 10,
         borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#96e6b0',
+        backgroundColor: '#d8fae3',
+    },
+    teamHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
+    teamLogo: {
+        width: 40,
+        height: 40,
+        borderRadius: 5,
+    },
+    teamTitle: {
+        fontWeight: 'bold',
+        fontSize: 18,
+        marginLeft: 10,
+        color: '#333',
     },
     playerContainer: {
         flexDirection: 'row',
@@ -153,7 +209,7 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#96e6b0',
         marginBottom: 10,
-        backgroundColor: '#d8fae3',
+        backgroundColor: '#fff',
     },
     playerImage: {
         width: 60,
@@ -186,7 +242,6 @@ const styles = StyleSheet.create({
     roleContainer: {
         padding: 5,
         borderRadius: 5,
-        // backgroundColor: '#f0f0f0',
     },
     roleText: {
         fontSize: 12,
@@ -199,6 +254,11 @@ const styles = StyleSheet.create({
     teamText: {
         fontSize: 12,
         color: '#666',
+    },
+    filterTabs: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginBottom: 10,
     },
     tabBox: {
         alignItems: 'center',
@@ -221,12 +281,5 @@ const styles = StyleSheet.create({
         color: 'green',
         fontWeight: 'bold',
         fontSize: 14,
-    },
-    tabSubTitle: {
-        fontSize: 12,
-        color: '#666',
-    },
-    blankText: {
-        fontSize: 2,
     },
 });

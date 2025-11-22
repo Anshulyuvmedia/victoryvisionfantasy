@@ -1,51 +1,56 @@
-import {
-    StyleSheet,
-    View,
-    useWindowDimensions,
-    Text,
-    Animated,
-} from 'react-native';
-import React, { useState, useEffect } from 'react';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+// component/matchestabs/TodayMatches.jsx
+
+import { StyleSheet, Text, View, useWindowDimensions, Animated, ScrollView, RefreshControl, } from 'react-native';
+import React, { useState, useContext, useCallback } from 'react';
 import LinearGradient from 'react-native-linear-gradient';
-import PredictionsTab from './PredictionsTab';
-import AiTeamsTab from './AiTeamsTab';
-import LineupsTab from './LineupsTab';
-import StatsTab from './StatsTab';
-import ExpertTab from './ExpertTab';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import Twenty20 from './Twenty20';
+import OneDay from './OneDay';
+import TestMatches from './TestMatches';
+import { GlobalContextReport } from '../../app/GlobalContextReport';
 
-const renderScene = SceneMap({
-    predictions: ({ route }) => <PredictionsTab onContentHeightChange={route.onContentHeightChange} matchID={route.matchID} />,
-    aiTeams: ({ route }) => <AiTeamsTab onContentHeightChange={route.onContentHeightChange} matchID={route.matchID} />,
-    lineupsTab: ({ route }) => <LineupsTab onContentHeightChange={route.onContentHeightChange} matchID={route.matchID} />,
-    // statsTab: ({ route }) => <StatsTab onContentHeightChange={route.onContentHeightChange} />,
-    // expertTab: ({ route }) => <ExpertTab onContentHeightChange={route.onContentHeightChange} />,
-});
+const TodayMatches = () => {
+    const { todayMatches, loading, refreshGlobalData } = useContext(GlobalContextReport); // ✅ added refresh + loading
+    const [refreshing, setRefreshing] = useState(false);
 
-const HomeTabNav = ({ matchID }) => {
-    const layout = useWindowDimensions();
-    const [index, setIndex] = useState(0);
-    const [initialLayout, setInitialLayout] = useState({ width: layout.width - 20 });
-    const [contentHeight, setContentHeight] = useState(0); // Track max content height
+    // 👇 ensure array safety
+    const safeTodayMatches = Array.isArray(todayMatches) ? todayMatches : [];
+    //console.log('todaymatches', safeTodayMatches);
 
-    useEffect(() => {
-        setInitialLayout({ width: layout.width - 20 });
-    }, [layout.width]);
-
-    const handleContentHeightChange = (height) => {
-        setContentHeight((prevHeight) => Math.max(prevHeight, height)); // Update to max height
+    // 👇 filter by match type
+    const matchesByType = {
+        Twenty20: safeTodayMatches.filter((match) => match.format === 3),
+        OneDay: safeTodayMatches.filter((match) => match.format === 1 || match.format === 7),
+        TestMatches: safeTodayMatches.filter((match) => match.format === 5),
     };
 
+    // ✅ added proper null guard for your console
+    //console.log('Twenty20 Matches', matchesByType.Twenty20.length);
+
+    // 👇 pull-to-refresh
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await refreshGlobalData(); // refresh global context
+        setRefreshing(false);
+    }, [refreshGlobalData]);
+
+    const renderScene = SceneMap({
+        Twenty20: () => <Twenty20 data={matchesByType.Twenty20} />,
+        OneDay: () => <OneDay data={matchesByType.OneDay} />,
+        TestMatches: () => <TestMatches data={matchesByType.TestMatches} />,
+    });
+
     const routes = [
-        { key: 'predictions', title: 'Predictions', onContentHeightChange: handleContentHeightChange, matchID: matchID },
-        { key: 'aiTeams', title: 'AI Teams', onContentHeightChange: handleContentHeightChange, matchID: matchID },
-        { key: 'lineupsTab', title: 'Lineups', onContentHeightChange: handleContentHeightChange, matchID: matchID },
-        // { key: 'statsTab', title: 'Stats', onContentHeightChange: handleContentHeightChange },
-        // { key: 'expertTab', title: 'Expert', onContentHeightChange: handleContentHeightChange },
+        { key: 'Twenty20', title: 'Twenty20' },
+        { key: 'OneDay', title: 'OneDay' },
+        { key: 'TestMatches', title: 'TestMatches' },
     ];
 
+    const layout = useWindowDimensions();
+    const [index, setIndex] = useState(0);
+
     const renderTabBar = (props) => {
-        const { navigationState, position } = props;
+        const { position } = props;
         const inputRange = routes.map((_, i) => i);
 
         return (
@@ -114,38 +119,43 @@ const HomeTabNav = ({ matchID }) => {
         );
     };
 
+    // ✅ wrapped TabView inside ScrollView with pull-to-refresh
     return (
-        <View style={[styles.container, { minHeight: contentHeight || 300, marginTop: 40 }]}>
-            {initialLayout.width > 0 && (
-                <TabView
-                    navigationState={{ index, routes }}
-                    renderScene={renderScene}
-                    onIndexChange={setIndex}
-                    initialLayout={initialLayout}
-                    style={styles.tabView}
-                    sceneContainerStyle={styles.sceneContainer}
-                    swipeEnabled={true}
-                    renderTabBar={renderTabBar}
+        <View
+            style={styles.container}
+            refreshControl={
+                <RefreshControl
+                    refreshing={refreshing || loading}
+                    onRefresh={onRefresh}
+                    colors={['#1d2a5e']}
                 />
-            )}
+            }
+        >
+            <TabView
+                navigationState={{ index, routes }}
+                renderScene={renderScene}
+                onIndexChange={setIndex}
+                style={styles.tabView}
+                sceneContainerStyle={styles.sceneContainer}
+                initialLayout={{ width: layout.width }}
+                renderTabBar={renderTabBar}
+            />
         </View>
     );
 };
 
-export default HomeTabNav;
+export default TodayMatches;
 
 const styles = StyleSheet.create({
     container: {
-        marginTop: 10,
-        borderRadius: 24,
-        flexGrow: 1, // Allow container to grow with content
+        height: 700,
     },
     tabView: {
         borderRadius: 24,
-        flexGrow: 1, // Allow TabView to grow with content
+        flexGrow: 1,
     },
     sceneContainer: {
-        flexGrow: 1, // Allow scenes to grow based on content
+        flexGrow: 1,
     },
     tabBar: {
         backgroundColor: '#5f83f1',

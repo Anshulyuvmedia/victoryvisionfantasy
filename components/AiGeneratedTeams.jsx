@@ -1,133 +1,247 @@
 import { StyleSheet, Text, View, FlatList, TextInput, TouchableOpacity, Image } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Feather } from '@expo/vector-icons'; // For the arrow icon
+import { Feather } from '@expo/vector-icons';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Clipboard from 'expo-clipboard';
+import { router } from 'expo-router';
+import { ToastAndroid, Platform } from "react-native";
 
-const AiGeneratedTeams = () => {
+
+const safeColors = {
+    headerBg: '#bbf7d0',
+    accent: '#16a34a',
+    gradientEnd: '#31ae5f',
+    contentBg: '#f0fdf4',
+    imageBg: '#96e6b0',
+    dtBg: '#4CAF50',
+    zoneBorder: '#4CAF50',
+    zoneColor: '#4CAF50',
+    copyBg: '#bbf7d0',
+};
+
+const riskyColors = {
+    headerBg: '#fee2e2',
+    accent: '#dc2626',
+    gradientEnd: '#ef4444',
+    contentBg: '#fef2f2',
+    imageBg: '#fecaca',
+    dtBg: '#ef4444',
+    zoneBorder: '#dc2626',
+    zoneColor: '#dc2626',
+    copyBg: '#fee2e2',
+};
+
+const AiGeneratedTeams = ({ userAITeams }) => {
+    console.log("date : ", userAITeams);
+    const [apiData, setApiData] = useState([]);
+    const [players, setPlayers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
-    const [teams, setTeams] = useState([
-        {
-            id: '1',
-            name: 'Team Alpha',
-            initial: 'A',
-            wk: 1, bat: 5, ar: 3, bow: 2,
-            captain: 'MS Dhoni', captainStats: '120 pts', captainImage: 'https://via.placeholder.com/40',
-            viceCaptain: 'V Kohli', viceCaptainStats: '95 pts', viceCaptainImage: 'https://via.placeholder.com/40',
-            teamPoints: 450, dtPlayers: 3, zone: 'Winning',
-            teamNumber: 1
-        },
-        {
-            id: '2',
-            name: 'Team Bravo',
-            initial: 'B',
-            wk: 1, bat: 4, ar: 4, bow: 2,
-            captain: 'R Sharma', captainStats: '110 pts', captainImage: 'https://via.placeholder.com/40',
-            viceCaptain: 'S Gill', viceCaptainStats: '85 pts', viceCaptainImage: 'https://via.placeholder.com/40',
-            teamPoints: 420, dtPlayers: 2, zone: 'Losing',
-            teamNumber: 2
-        },
-        {
-            id: '3',
-            name: 'Team Charlie',
-            initial: 'C',
-            wk: 2, bat: 4, ar: 3, bow: 2,
-            captain: 'J Root', captainStats: '100 pts', captainImage: 'https://via.placeholder.com/40',
-            viceCaptain: 'B Stokes', viceCaptainStats: '90 pts', viceCaptainImage: 'https://via.placeholder.com/40',
-            teamPoints: 410, dtPlayers: 2, zone: 'Winning',
-            teamNumber: 1
-        },
-        {
-            id: '4',
-            name: 'Team Delta',
-            initial: 'D',
-            wk: 1, bat: 5, ar: 2, bow: 3,
-            captain: 'K Williamson', captainStats: '115 pts', captainImage: 'https://via.placeholder.com/40',
-            viceCaptain: 'T Southee', viceCaptainStats: '80 pts', viceCaptainImage: 'https://via.placeholder.com/40',
-            teamPoints: 430, dtPlayers: 3, zone: 'Losing',
-            teamNumber: 2
-        },
-    ]);
 
-    const filteredTeams = teams.filter(team =>
+    const fetchGeneratedAiTeams = async () => {
+        try {
+            const storedData = await AsyncStorage.getItem('userData');
+            const parsedData = storedData ? JSON.parse(storedData) : {};
+            const userid = parsedData.userid;
+
+            const response = await axios.get(`https://api.victoryvision.live/api/getUsers-Ai-teams`, {
+                params: { userid }
+            });
+
+            console.log('API Response:', response.data.results);
+
+            const results = response.data.results;
+            if (!Array.isArray(results) || results.length === 0) {
+                console.warn("No teams found in API response");
+                return;
+            }
+
+            const processedTeams = results.map((team, index) => {
+                const players = team.players || [];
+
+                // Calculate role counts
+                const roleCounts = players.reduce(
+                    (acc, player) => {
+                        if (player.role === 'WK') acc.wk += 1;
+                        else if (player.role === 'BAT') acc.bat += 1;
+                        else if (player.role === 'ALL' || player.role === 'AR') acc.ar += 1;
+                        else if (player.role === 'BOWL') acc.bow += 1;
+                        return acc;
+                    },
+                    { wk: 0, bat: 0, ar: 0, bow: 0 }
+                );
+
+                // Get captain and vice-captain from settings
+                const captainName = team.settings?.captain || 'Not selected';
+                const viceCaptainName = team.settings?.viceCaptain || 'Not selected';
+                const captain = players.find(p => p.name === captainName) || {};
+                const viceCaptain = players.find(p => p.name === viceCaptainName) || {};
+
+                return {
+                    id: index.toString(),
+                    name: `Team ${index + 1}`,
+                    players,
+                    ...roleCounts,
+                    captain: captainName,
+                    captainStats: 'N/A',
+                    captainImage: captain.image || 'https://via.placeholder.com/40',
+                    viceCaptain: viceCaptainName,
+                    viceCaptainStats: 'N/A',
+                    viceCaptainImage: viceCaptain.image || 'https://via.placeholder.com/40',
+                    teamPoints: 'N/A',
+                    dtPlayers: players.length,
+                    zone: team.type || 'Balanced',
+                    teamNumber: team.settings?.teamCount || index + 1,
+                    teamId: team._id,
+                    winRate: team.winRate || 0
+                };
+            });
+
+            setApiData(processedTeams);
+        } catch (error) {
+            console.error('Failed to fetch AI teams:', error);
+        }
+    };
+
+
+    const handleCopyTeam = async (team) => {
+        const playerJSON = (team.players || []).map(player => JSON.stringify(player, null, 2)).join(',\n');
+        // console.log(playerJSON);
+        await Clipboard.setStringAsync(playerJSON);
+        if (!playerJSON) {
+            console.warn('No players found for this team.');
+            return;
+        } else {
+            ToastAndroid.showWithGravity(
+                "Team copied to clipboard!",
+                ToastAndroid.SHORT,
+                ToastAndroid.CENTER
+            );
+        }
+
+    };
+
+    useEffect(() => {
+        fetchGeneratedAiTeams();
+    }, []);
+
+    useEffect(() => {
+        fetchGeneratedAiTeams();
+    }, [userAITeams]);
+
+
+    const filteredTeams = apiData.filter(team =>
         team.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    const renderTeamCard = ({ item }) => (
-        <View style={styles.card}>
-            <LinearGradient
-                colors={['#f0f4ff80', '#ffffff00']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.gradientBackground}
-            >
-                {/* Card Header */}
-                <View style={styles.cardHeader}>
-                    <View style={styles.statsContainer}>
-                        <Text style={styles.statText}>WK: {item.wk}</Text>
-                        <Text style={styles.statText}>BAT: {item.bat}</Text>
-                        <Text style={styles.statText}>AR: {item.ar}</Text>
-                        <Text style={styles.statText}>BOW: {item.bow}</Text>
-                    </View>
-                    <View style={styles.teamInfo}>
-                        <Text style={styles.teamNumber}>T{item.id}</Text>
-                        <TouchableOpacity style={styles.arrowButton}>
-                            <Feather name="arrow-up-right" size={16} color="#fff" />
-                        </TouchableOpacity>
-                    </View>
-                </View>
+    const renderTeamCard = ({ item }) => {
+        const isRisky = item.zone === 'Risky';
+        const colors = isRisky ? riskyColors : safeColors;
+
+        const dynamicPlayerTitleStyle = {
+            ...styles.playerTitle,
+            backgroundColor: colors.accent,
+        };
+
+        const dynamicPlayerTitleCapStyle = {
+            ...styles.playerTitleCap,
+            backgroundColor: colors.accent,
+        };
+
+        const dynamicPlayerImageStyle = {
+            ...styles.playerImage,
+            backgroundColor: colors.imageBg,
+        };
+
+        const dynamicZoneTextStyle = {
+            ...styles.zoneText,
+            borderColor: colors.zoneBorder,
+            color: colors.zoneColor,
+        };
+
+        const dynamicDtRowStyle = {
+            ...styles.dtRow,
+            backgroundColor: colors.dtBg,
+        };
+
+        const dynamicDtLabelStyle = {
+            ...styles.dtLabel,
+            color: isRisky ? '#fff' : '#fff', // Keep white for both
+        };
+
+        return (
+            <View style={styles.card}>
                 <LinearGradient
-                    colors={['#f0f4ff00', '#31ae5f']}
+                    colors={['#f0f4ff80', '#ffffff00']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
-                    style={styles.gradientBorder}
+                    style={styles.gradientBackground}
                 >
-                    {/* Card Content */}
-                    <View style={styles.cardContent}>
-                        <View style={styles.playerSection}>
-                            <View style={styles.playerRow}>
-                                <Text style={styles.playerTitleCap}>C</Text>
-                                <Image source={{ uri: item.captainImage }} style={styles.playerImage} />
-                                <View style={styles.playerDetails}>
-                                    <Text style={styles.playerName}>{item.captain}</Text>
-                                    <View style={styles.pointsRow}>
-                                        <Text style={styles.playerStats}>{item.captainStats}</Text>
-                                        <Text style={styles.playerStats}>{item.captainStats}</Text>
-                                    </View>
-                                </View>
-                            </View>
-                            <View style={styles.playerRow}>
-                                <Text style={styles.playerTitle}>VC</Text>
-                                <Image source={{ uri: item.viceCaptainImage }} style={styles.playerImage} />
-                                <View style={styles.playerDetails}>
-                                    <Text style={styles.playerName}>{item.captain}</Text>
-                                    <View style={styles.pointsRow}>
-                                        <Text style={styles.playerStats}>{item.captainStats}</Text>
-                                        <Text style={styles.playerStats}>{item.captainStats}</Text>
-                                    </View>
-                                </View>
-                            </View>
+                    <View style={[styles.cardHeader, { backgroundColor: colors.headerBg }]}>
+                        <View style={styles.statsContainer}>
+                            <Text style={styles.statText}>WK: {item.wk}</Text>
+                            <Text style={styles.statText}>BAT: {item.bat}</Text>
+                            <Text style={styles.statText}>AR: {item.ar}</Text>
+                            <Text style={styles.statText}>BOW: {item.bow}</Text>
                         </View>
-                        <View style={styles.teamStats}>
-                            <Text style={styles.statLabel}>Points</Text>
-                            <Text style={styles.statValue}>{item.teamPoints}</Text>
-                            <View style={styles.dtRow}>
-                                <Text style={styles.dtLabel}>DT Players</Text>
-                                <Text style={styles.dtLabel}>{item.dtPlayers}</Text>
-                            </View>
-                            <Text style={styles.zoneText}>{item.zone} Zone</Text>
+                        <View style={styles.teamInfo}>
+                            <Text style={[styles.teamNumber, { backgroundColor: colors.accent }]}>T{item.id}</Text>
+                            <TouchableOpacity style={[styles.arrowButton, { backgroundColor: colors.accent }]} onPress={() => router.push(`/(root)/playerlist/${item.teamId}`)}>
+                                <Feather name="arrow-up-right" size={16} color="#fff" />
+                            </TouchableOpacity>
                         </View>
                     </View>
+                    <LinearGradient
+                        colors={['#f0f4ff00', colors.gradientEnd]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.gradientBorder}
+                    >
+                        <View style={[styles.cardContent, { backgroundColor: colors.contentBg }]}>
+                            <View style={styles.playerSection}>
+                                <View style={styles.playerRow}>
+                                    <Text style={dynamicPlayerTitleCapStyle}>C</Text>
+                                    <Image source={{ uri: item.captainImage }} style={dynamicPlayerImageStyle} />
+                                    <View style={styles.playerDetails}>
+                                        <Text style={styles.playerName}>{item.captain}</Text>
+                                        <View style={styles.pointsRow}>
+                                            <Text style={styles.playerStats}>{item.captainStats}</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                                <View style={styles.playerRow}>
+                                    <Text style={dynamicPlayerTitleStyle}>VC</Text>
+                                    <Image source={{ uri: item.viceCaptainImage }} style={dynamicPlayerImageStyle} />
+                                    <View style={styles.playerDetails}>
+                                        <Text style={styles.playerName}>{item.viceCaptain}</Text>
+                                        <View style={styles.pointsRow}>
+                                            <Text style={styles.playerStats}>{item.viceCaptainStats}</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            </View>
+                            <View style={styles.teamStats}>
+                                <Text style={styles.statLabel}>Win Rate</Text>
+                                <Text style={styles.statValue}>{item.winRate}%</Text>
+                                <View style={dynamicDtRowStyle}>
+                                    <Text style={styles.dtLabel}>DT Players</Text>
+                                    <Text style={dynamicDtLabelStyle}>{item.dtPlayers}</Text>
+                                </View>
+                                <Text style={dynamicZoneTextStyle}>{item.zone} Team</Text>
+                            </View>
+                        </View>
+                    </LinearGradient>
+                    <View style={styles.cardFooter}>
+                        <TouchableOpacity onPress={() => handleCopyTeam(item)} style={[styles.copyButton, { backgroundColor: colors.copyBg }]}>
+                            <Text style={styles.copyButtonText}>Copy Team</Text>
+                            <Feather name="copy" size={16} color="#000" />
+                        </TouchableOpacity>
+                    </View>
                 </LinearGradient>
-                {/* Card Footer */}
-                <View style={styles.cardFooter}>
-                    <TouchableOpacity style={styles.copyButton}>
-                        <Text style={styles.copyButtonText}>Copy Team</Text>
-                        <Feather name="copy" size={16} color="#000" />
-                    </TouchableOpacity>
-                </View>
-            </LinearGradient>
-        </View>
-    );
+            </View>
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -142,7 +256,7 @@ const AiGeneratedTeams = () => {
             <FlatList
                 data={filteredTeams}
                 renderItem={renderTeamCard}
-                keyExtractor={item => item.id}
+                keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
             />
         </View>
@@ -177,7 +291,6 @@ const styles = StyleSheet.create({
         paddingBottom: 20,
     },
     card: {
-        // padding: 12,
         marginBottom: 10,
         overflow: 'hidden',
         borderRadius: 20,
@@ -196,7 +309,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        backgroundColor: '#bbf7d0',
         borderTopLeftRadius: 20,
         borderTopRightRadius: 20,
         padding: 10,
@@ -222,11 +334,9 @@ const styles = StyleSheet.create({
         marginRight: 10,
         paddingHorizontal: 8,
         paddingVertical: 2,
-        backgroundColor: '#16a34a',
         borderRadius: 10,
     },
     arrowButton: {
-        backgroundColor: '#16a34a',
         width: 30,
         height: 30,
         borderRadius: 15,
@@ -236,13 +346,12 @@ const styles = StyleSheet.create({
     cardContent: {
         flexDirection: 'row',
         padding: 10,
-        backgroundColor: '#f0fdf4',
         borderBottomLeftRadius: 20,
         borderBottomRightRadius: 20,
     },
     playerSection: {
         marginBottom: 10,
-        flexDirection: 'col',
+        flexDirection: 'column',
         flex: 1,
     },
     playerRow: {
@@ -259,7 +368,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         paddingHorizontal: 6,
         paddingVertical: 2,
-        backgroundColor: '#16a34a',
         borderRadius: 50,
         textAlign: 'center',
         marginRight: 16,
@@ -270,7 +378,6 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         paddingHorizontal: 6,
         paddingVertical: 2,
-        backgroundColor: '#16a34a',
         borderRadius: 50,
         textAlign: 'center',
         marginRight: 10,
@@ -279,7 +386,6 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 10,
-        backgroundColor: '#96e6b0',
         marginEnd: 10,
     },
     playerDetails: {
@@ -309,7 +415,6 @@ const styles = StyleSheet.create({
         color: '#000',
         fontWeight: 'bold',
     },
-
     dtLabel: {
         fontSize: 12,
         color: '#fff',
@@ -318,18 +423,15 @@ const styles = StyleSheet.create({
     },
     dtRow: {
         flexDirection: 'row',
-        backgroundColor: '#4CAF50',
-        paddingInline: '10',
+        paddingHorizontal: 10,
         borderRadius: 10,
     },
     zoneText: {
-        paddingInline: '10',
+        paddingHorizontal: 10,
         borderWidth: 1,
-        borderColor: '#4CAF50',
         marginTop: 5,
         borderRadius: 10,
         fontSize: 12,
-        color: '#4CAF50',
         fontWeight: '600',
     },
     cardFooter: {
@@ -337,7 +439,6 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     copyButton: {
-        backgroundColor: '#bbf7d0',
         paddingVertical: 6,
         paddingHorizontal: 12,
         borderRadius: 15,

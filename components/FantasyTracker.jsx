@@ -1,10 +1,29 @@
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
-import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import { Feather, FontAwesome } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker'; // Import document picker
+import { MaterialCommunityIcons } from '@expo/vector-icons'; // Ensure this is installed
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import OverallAnalysis from './OverallAnalysis';
 
 const FantasyTracker = () => {
     const [selectedFile, setSelectedFile] = useState(null);
+    const [fileData, setfileData] = useState(null);
+    const [authUser, setauthUser] = useState({});
+    const [isLoading, setisLoading] = useState(false);
+    const [analysisData, setAnalysisData] = useState(null);
+    const [showAnalysis, setshowAnalysis] = useState(null);
+
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const storedData = await AsyncStorage.getItem('userData');
+            // console.log("USER DATA : ", storedData);
+            setauthUser(storedData);
+        };
+        fetchUserData();
+    }, []);
 
     const pickDocument = async () => {
         // Launch document picker
@@ -15,6 +34,7 @@ const FantasyTracker = () => {
         });
 
         if (result.assets) {
+            setfileData(result.assets[0]);
             // Show only first 20 letters of file name, then "..."
             const fileName = result.assets[0].name;
             const shortName = fileName.length > 20 ? fileName.slice(0, 20) + '...' : fileName;
@@ -25,6 +45,37 @@ const FantasyTracker = () => {
             // console.log('File Size:', result.assets[0].size);
         } else if (result.canceled) {
             console.log('Document selection canceled');
+        }
+    };
+
+    const uploadFile = async () => {
+        const storedData = await AsyncStorage.getItem('userData');
+        const parsedData = storedData ? JSON.parse(storedData) : {};
+        console.log(parsedData);
+        setisLoading(true);
+        if (!fileData) return;
+
+        const file = fileData;
+        const formData = new FormData();
+        formData.append('file', {
+            uri: file.uri,
+            name: file.name,
+            type: file.mimeType || 'image/jpeg',
+        });
+        formData.append('userId', parsedData.userid);
+
+        try {
+            const response = await axios.post(
+                'https://api.victoryvision.live/api/insert-fantasy-points',
+                formData,
+                { headers: { 'Content-Type': 'multipart/form-data' } }
+            );
+            console.log("Upload success:", response.data);
+            setisLoading(false);
+            setAnalysisData(response.data);
+        } catch (error) {
+            console.error("Upload failed:", error);
+            setisLoading(false);
         }
     };
 
@@ -47,7 +98,21 @@ const FantasyTracker = () => {
                 </View>
             </View>
             {selectedFile && (
-                <Text style={styles.selectedFileText}>Selected File: {selectedFile}</Text>
+                <>
+                    <Text style={styles.selectedFileText}>Selected File: {selectedFile}</Text>
+                    <TouchableOpacity
+                        style={styles.chatButton}
+                        onPress={uploadFile}
+                    >
+                        <View style={styles.buttonContent}>
+                            <MaterialCommunityIcons name="robot-excited-outline" size={20} color="#ea580c" />
+                            <Text style={styles.buttonText}>
+                                Analyze With AI
+                                {isLoading == true && <ActivityIndicator color="#ea580c" />}
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+                </>
             )}
             <View style={styles.whatYouGetSection}>
                 <Text style={styles.whatYouGetText}>What you'll get:</Text>
@@ -76,6 +141,22 @@ const FantasyTracker = () => {
             <Text style={styles.recommendationText}>
                 AI suggest the best captain and vice-captain based on your screenshot and recent player performance. Use these tips to create a stronger team.
             </Text>
+            {analysisData && (
+                <View style={{ marginVertical: 20 }}>
+                    <TouchableOpacity
+                        style={styles.chatButton}
+                        onPress={() => setshowAnalysis(true)}
+                    >
+                        <View style={styles.buttonContent}>
+                            <MaterialCommunityIcons name="eye-outline" size={20} color="#ea580c" />
+                            <Text style={styles.buttonText}>View Analysis</Text>
+                        </View>
+                    </TouchableOpacity>
+                </View>
+            )}
+            {analysisData && showAnalysis && (
+                <OverallAnalysis analysisId={analysisData} />
+            )}
         </View>
     );
 };
@@ -179,5 +260,30 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         lineHeight: 18,
         marginBottom: 10,
+    },
+    chatButton: {
+        height: 50,
+        borderRadius: 30,
+        borderWidth: 1,
+        borderColor: '#ea580c',
+        backgroundColor: '#fff7ed',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        marginBottom: 10,
+    },
+    buttonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    buttonText: {
+        color: '#ea580c',
+        fontSize: 14,
+        fontWeight: '600',
+        marginLeft: 8, // Space between icon and text
     },
 });

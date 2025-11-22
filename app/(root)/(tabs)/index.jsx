@@ -1,41 +1,44 @@
 import { View, StyleSheet, ScrollView } from 'react-native';
 import Header from '@/components/Header';
-import MatchBanner from '@/components/MatchBanner';
-import WinProbability from '@/components/WinProbability';
-import PitchReport from '@/components/PitchReport';
-import RecentForm from '@/components/RecentForm';
-import HeadToHead from '@/components/HeadToHead';
-import HomeTabNav from '@/components/hometabs/HomeTabNav';
-
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import TodayMatches from '../../../components/matchestabs/TodayMatches';
 const HomeScreen = () => {
+
+    // Fetch Match Data here by matching ID..............
+    // useEffect(() => {
+    //     const fetchMatchData = async () => {
+    //         try {
+    //             const response = await axios.get(`https://api.victoryvision.live/api/match-details`, {
+    //                 params: { matchId }
+    //             });
+    //             // console.log("Win prob",response.data.match);
+    //             if (response && response.data && response.data.match) {
+    //                 const { venue, weatherReport, matchDate } = response.data.match;
+    //                 const { winProbability,teamA, teamB,pitchReport } = response.data.match;
+    //                 const {recentForm } = response.data.match;
+    //                 const { headToHeadStats } = response.data.match;
+    //                 setmatchBannerData({ venue, weatherReport, matchDate });
+    //                 setwinprobdata({ winProbability,teamA, teamB, pitchReport });
+    //                 setrecentForm({ recentForm });
+    //                 setheadToHeadStats({ headToHeadStats,teamA, teamB });
+    //                 console.log(matchBannerData);
+    //             }
+    //         } catch (error) {
+    //             console.error('Error fetching Match data:', error);
+    //         }
+    //     };
+    //     fetchMatchData();
+    // }, []);
     return (
         <View style={styles.safeArea}>
             <View style={styles.container}>
                 <Header />
-                <ScrollView
-                    style={styles.scrollView}
-                    contentContainerStyle={styles.scrollContent}
-                    showsVerticalScrollIndicator={false}
-                >
+                <View style={styles.scrollView}>
                     <View style={styles.section}>
-                        <MatchBanner />
+                        <TodayMatches />
                     </View>
-                    <View style={styles.section}>
-                        <WinProbability />
-                    </View>
-                    <View style={styles.section}>
-                        <PitchReport />
-                    </View>
-                    <View style={styles.section}>
-                        <RecentForm />
-                    </View>
-                    <View style={styles.section}>
-                        <HeadToHead />
-                    </View>
-                    <View style={styles.section}>
-                        <HomeTabNav />
-                    </View>
-                </ScrollView>
+                </View>
             </View>
         </View>
     );

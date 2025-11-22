@@ -1,19 +1,108 @@
-import { StyleSheet, Text, View, Switch, TouchableOpacity, ScrollView } from 'react-native'
-import React, { useState } from 'react'
+import { StyleSheet, Text, ActivityIndicator, View, Switch, TouchableOpacity, ScrollView, Alert } from 'react-native'
+import React, { useEffect, useState, useContext } from 'react';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Picker } from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { GlobalContextReport } from '../app/GlobalContextReport';
 
-const Aiteamconfig = () => {
+
+const Aiteamconfig = ({ setuserAITeams }) => {
+    const { todayMatches } = useContext(GlobalContextReport);
+    const safeTodayMatches = Array.isArray(todayMatches) ? todayMatches : [];
+    // console.log('todaymatchesss', safeTodayMatches);
+    // console.log("todayMatches From AI Config : ", todayMatches);
+
     const [autoPickCaptain, setAutoPickCaptain] = useState(false)
     const [autoPickViceCaptain, setAutoPickViceCaptain] = useState(false)
-    const [lockStarPlayers, setLockStarPlayers] = useState(false)
-    const [avoidInjuryProne, setAvoidInjuryProne] = useState(false)
-    const [numTeams, setNumTeams] = useState('3 Teams')
+    // const [lockStarPlayers, setLockStarPlayers] = useState(false)
+    // const [avoidInjuryProne, setAvoidInjuryProne] = useState(false)
+    const [selectedMatchId, setSelectedMatchId] = useState(null)
     const [contestType, setContestType] = useState('Grand League')
     const [riskLevel, setRiskLevel] = useState('Balanced')
+    const contestOptions = ['T20I', 'ODI', 'Test Matches']
+    const [authUser, setauthUser] = useState({});
+    const [loading, setLoading] = useState(false);
 
-    const teamOptions = ['1 Team', '3 Teams', '5 Teams', '10 Teams']
-    const contestOptions = ['Grand League', 'Head-to-Head', '50-50', 'Multi-Entry']
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const storedData = await AsyncStorage.getItem('userData');
+            // console.log("USER DATA From AI Config : ", storedData);
+            setauthUser(storedData);
+        };
+        fetchUserData();
+        //It will set Id of already selected Match
+        if (todayMatches && todayMatches.length > 0) {
+            setSelectedMatchId(todayMatches[0].matchId);
+        }
+    }, [todayMatches]);
+
+
+    const generateAiTeams = async () => {
+        setLoading(true);
+        const storedData = await AsyncStorage.getItem('userData');
+        const parsedData = storedData ? JSON.parse(storedData) : {};
+        const formData = new FormData();
+        formData.append('userId', parsedData.userid);
+        formData.append('autoPickCaptain', autoPickCaptain);
+        formData.append('autoPickViceCaptain', autoPickViceCaptain);
+        // formData.append('lockStarPlayers', lockStarPlayers);
+        // formData.append('avoidInjuryProne', avoidInjuryProne);
+        formData.append('selectedMatchId', selectedMatchId);
+        formData.append('contestType', contestType);
+        formData.append('riskLevel', riskLevel);
+        console.log('Form Data:', formData);
+
+        //This is a dummy code for testing do not remove or delete it
+        // try {
+        //     const response = await axios.post(
+        //         "http://192.168.1.27:3000/api/insert-dummy-ai-teams",
+        //         { matchId: 94353 }
+        //     );
+        //     setLoading(false);
+        //     setuserAITeams(Date.now());
+        //     Alert.alert("Success", "Dummy AI Teams saved to MongoDB");
+        //     console.log(response.data);
+
+        // } catch (error) {
+        //     setLoading(false);
+        //     console.log(error);
+        //     Alert.alert("Error", "Failed to save dummy teams");
+        // }
+        try {
+            const response = await axios.post(
+                'https://api.victoryvision.live/api/insert-aiteam',
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                }
+            );
+
+            // ❗ Check for missing or empty AI data
+            if (
+                !response.data ||
+                !response.data.data ||
+                response.data.data.length === 0
+            ) {
+                setLoading(false);
+                Alert.alert('Error', 'AI did not generate any team. Please try again.');
+                return; // stop here
+            }
+
+            // If valid → success
+            setLoading(false);
+            setuserAITeams(Date.now());
+            Alert.alert('Success', 'AI Teams generated successfully!');
+
+        } catch (error) {
+            setLoading(false);
+            Alert.alert('Error', 'Failed to generate AI teams. Please try again.');
+            console.error('Upload failed:', error);
+        }
+
+    };
     return (
         <View style={styles.container}>
             <View style={styles.titlebox}>
@@ -37,7 +126,7 @@ const Aiteamconfig = () => {
                 />
             </View>
 
-            <View style={styles.row}>
+            {/* <View style={styles.row}>
                 <Text style={styles.optiontitle}>Lock Star Players</Text>
                 <Switch
                     onValueChange={setLockStarPlayers}
@@ -51,23 +140,28 @@ const Aiteamconfig = () => {
                     onValueChange={setAvoidInjuryProne}
                     value={avoidInjuryProne}
                 />
-            </View>
+            </View> */}
 
             <View style={styles.row}>
                 <View style={styles.col}>
-                    <Text style={styles.optiontitle}>Number of Teams</Text>
+                    <Text style={styles.optiontitle}>Select Match</Text>
                     <View style={styles.dropdown}>
                         <Picker
-                            selectedValue={numTeams}
-                            onValueChange={(itemValue) => setNumTeams(itemValue)}
+                            selectedValue={selectedMatchId}
+                            onValueChange={(itemValue) => setSelectedMatchId(itemValue)}
                             style={styles.picker}
                         >
-                            {teamOptions.map((option) => (
-                                <Picker.Item key={option} label={option} value={option} />
+                            {todayMatches.map((option) => (
+                                <Picker.Item
+                                    key={option.matchId}
+                                    label={option.title}
+                                    value={option.matchId}
+                                />
                             ))}
                         </Picker>
                     </View>
                 </View>
+
 
                 <View style={styles.col}>
                     <Text style={styles.optiontitle}>Contest Type</Text>
@@ -92,25 +186,33 @@ const Aiteamconfig = () => {
                         style={[styles.safeButton, riskLevel === 'Safe' && styles.safeButtonSelected]}
                         onPress={() => setRiskLevel('Safe')}
                     >
-                        <Text style={styles.safeButtonText}>Safe</Text>
+                        <Text style={[styles.safeButtonText, riskLevel === 'Safe' && styles.safeButtonSelected]}>Safe</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                         style={[styles.balanceButton, riskLevel === 'Balanced' && styles.balanceButtonSelected]}
                         onPress={() => setRiskLevel('Balanced')}
                     >
-                        <Text style={styles.balanceButtonText}>Balanced</Text>
-                    </TouchableOpacity>
+                        <Text style={[styles.balanceButtonText, riskLevel === 'Balanced' && styles.balanceButtonSelected]}>Balanced</Text>
+                    </TouchableOpacity> */}
                     <TouchableOpacity
                         style={[styles.riskButton, riskLevel === 'Risky' && styles.riskButtonSelected]}
                         onPress={() => setRiskLevel('Risky')}
                     >
-                        <Text style={styles.riskButtonText}>Risky</Text>
+                        <Text style={[styles.riskButtonText, riskLevel === 'Risky' && styles.riskButtonSelected]}>Risky</Text>
                     </TouchableOpacity>
                 </View>
             </View>
 
-            <TouchableOpacity style={styles.generateButton}>
-                <Text style={styles.generateButtonText}>Generate AI Teams</Text>
+            <TouchableOpacity
+                style={[styles.generateButton, loading && { opacity: 0.7 }]}
+                onPress={generateAiTeams}
+                disabled={loading}
+            >
+                {loading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                    <Text style={styles.generateButtonText}>Generate AI Teams</Text>
+                )}
             </TouchableOpacity>
         </View>
     )
@@ -143,6 +245,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         marginBottom: 12,
+        marginTop: 6,
     },
     col: {
         flexDirection: 'column',
@@ -175,6 +278,7 @@ const styles = StyleSheet.create({
     picker: {
         // height: 50,
         width: '100%',
+        color: '#ergba(0, 0, 0, 1)'
     },
     riskContainer: {
         marginBottom: 16,
@@ -186,6 +290,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         marginTop: 8,
+        gap: 4
 
     },
     riskButton: {
@@ -195,9 +300,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#ea580c',
         backgroundColor: '#fff7ed',
+        width: '50%'
     },
     riskButtonText: {
         color: '#ea580c',
+        textAlign: 'center'
     },
     safeButton: {
         paddingVertical: 8,
@@ -206,9 +313,11 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: 'green',
         backgroundColor: '#f0fdf4',
+        width: '50%'
     },
     safeButtonText: {
         color: 'green',
+        textAlign: 'center'
     },
     balanceButton: {
         paddingVertical: 8,
@@ -223,13 +332,17 @@ const styles = StyleSheet.create({
         color: '#5f83f1',
     },
     riskButtonSelected: {
-        backgroundColor: '#fff7ed',
+        backgroundColor: '#ea580c',
+        color: '#ffffffff',
     },
     safeButtonSelected: {
-        backgroundColor: '#f0fdf4',
+        backgroundColor: 'green',
+        color: '#ffffffff',
+
     },
     balanceButtonSelected: {
-        backgroundColor: '#f2f5ff',
+        backgroundColor: '#5f83f1',
+        color: '#ffffffff',
     },
     generateButton: {
         backgroundColor: '#5f83f1',

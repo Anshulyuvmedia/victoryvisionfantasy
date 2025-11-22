@@ -11,7 +11,7 @@ const UserProfile = () => {
     const [userData, setUserData] = useState({
         name: 'Guest User',
         email: 'No email provided',
-        profileImage: null, // Use null for no image, will fallback to default
+        profileImage: null,     
     });
 
     // Fetch user data from AsyncStorage on component mount
@@ -21,6 +21,7 @@ const UserProfile = () => {
                 const storedData = await AsyncStorage.getItem('userData');
                 if (storedData) {
                     const parsedData = JSON.parse(storedData);
+                    // console.log("Profile User data : ",storedData);
                     setUserData({
                         name: parsedData.name || 'Guest User',
                         email: parsedData.email || 'No email provided',
@@ -40,6 +41,7 @@ const UserProfile = () => {
     const handleLogout = async () => {
         try {
             await AsyncStorage.removeItem('userData');
+            await AsyncStorage.removeItem('userToken');
             router.replace('/login'); // Navigate to login screen
         } catch (error) {
             console.error('Error during logout:', error);
@@ -47,6 +49,7 @@ const UserProfile = () => {
         }
     };
 
+    
     return (
         <View style={styles.main}>
             <Header />

@@ -1,10 +1,12 @@
+// app/(auth)/login.jsx
 import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, Image } from 'react-native';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { moderateScale, verticalScale, scale } from 'react-native-size-matters';
 import images from '@/constants/images';
-
+import axios from 'axios';
+import { GlobalContextReport } from '../GlobalContextReport';
 const LoginScreen = () => {
     const router = useRouter();
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -13,25 +15,27 @@ const LoginScreen = () => {
     const [generatedOtp, setGeneratedOtp] = useState('');
     const [isOtpSent, setIsOtpSent] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-
-    const generateOtp = () => {
+    const [userdata, setuserdata] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const { refreshGlobalData } = useContext(GlobalContextReport);
+    const generateOtp = async () => {
+        // console.log(phoneNumber);
         if (!phoneNumber || phoneNumber.length !== 10) {
             Alert.alert('Error', 'Please enter a valid 10-digit phone number.');
             return;
         }
-        // if (!name.trim()) {
-        //     Alert.alert('Error', 'Please enter your name.');
-        //     return;
-        // }
-
         setIsLoading(true);
-        const otpValue = Math.floor(1000 + Math.random() * 9000).toString();
-        setGeneratedOtp(otpValue);
-        setIsOtpSent(true);
+        try {
+            const response = await axios.post(`https://api.victoryvision.live/api/generateOtp`, { phoneNumber });
+            const otpValue = response.data.otp;
+            setGeneratedOtp(otpValue); // You can hide this in prod
+            setIsOtpSent(true);
+
+        } catch (error) {
+            console.error('Generate OTP error:', error.message);
+            Alert.alert('Error', 'Failed to generate OTP.', error.message);
+        }
         setIsLoading(false);
-        // setTimeout(() => {
-        //     Alert.alert('OTP Sent', `Your OTP is: ${otpValue} (Demo only)`);
-        // }, 1000); // Simulate network delay
     };
 
     const handleLogin = async () => {
@@ -39,34 +43,59 @@ const LoginScreen = () => {
             Alert.alert('Error', 'Please send OTP first.');
             return;
         }
-        if (!otp || otp.length !== 4) {
-            Alert.alert('Error', 'Please enter a valid 4-digit OTP.');
+        if (!otp || otp.length !== 6) {
+            Alert.alert('Error', 'Please enter a valid 6-digit OTP.');
             return;
         }
 
         setIsLoading(true);
-        const dummyPhoneNumber = '9876543210';
-        if (phoneNumber === dummyPhoneNumber && otp === generatedOtp) {
-            try {
-                // Store user session
-                await AsyncStorage.setItem('userToken', 'loggedIn');
-                // Store user data for profile
+        try {
+            const response = await axios.post(`https://api.victoryvision.live/api/verifyOtp`, {
+                phoneNumber,
+                otp,
+            });
+
+            if (response.data.status == true) {
+                // console.log("USER DATA : ",response.data.userdata);
+                setuserdata(response.data.userdata);
+                // Save session/token (dummy in this case)
+                await AsyncStorage.setItem('userToken', response.data.userdata._id);
+
                 const userData = {
-                    name: name.trim(),
-                    email: `${phoneNumber}@example.com`,
-                    profileImage: null,
+                    userid: response.data.userdata._id,
+                    name: response.data.userdata.name,
+                    email: response.data.userdata.email,
+                    mobilenumber: response.data.userdata.mobilenumber,
                 };
+                // console.log("USER DATA : ",userData);
                 await AsyncStorage.setItem('userData', JSON.stringify(userData));
+                await refreshGlobalData();
                 router.replace('/(root)/(tabs)/');
-            } catch (error) {
-                Alert.alert('Error', 'Failed to save session. Please try again.');
-                console.error('Login error:', error);
+            } else {
+                Alert.alert('Error', 'Invalid OTP. Please try again.');
             }
-        } else {
-            Alert.alert('Error', 'Invalid phone number or OTP. Please check and try again.');
+        } catch (error) {
+            console.error('Verify OTP error:', error.message);
+            Alert.alert('Error', 'OTP verification failed.');
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
+
+    useEffect(() => {
+        const checkAuthState = async () => {
+            try {
+                const token = await AsyncStorage.getItem('userToken');
+                // console.log("userToken : ", token);
+                if (token) {
+                    router.push('/(root)/');
+                }
+            } catch (error) {
+                console.error('Error checking auth state:', error);
+            }
+        };
+        checkAuthState();
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -79,12 +108,12 @@ const LoginScreen = () => {
                 />
             </View>
             <Text style={styles.title}>Login with Phone</Text>
-            <Text style={styles.label}>Dummy Phone Number: 9876543210</Text>
 
-            {/* Phone Number Input */}
+            {/* /* Phone Number Input */}
             <TextInput
                 style={styles.input}
                 placeholder="Enter Phone Number"
+                placeholderTextColor="#666"
                 value={phoneNumber}
                 onChangeText={setPhoneNumber}
                 keyboardType="phone-pad"
@@ -111,7 +140,7 @@ const LoginScreen = () => {
                         value={otp}
                         onChangeText={setOtp}
                         keyboardType="numeric"
-                        maxLength={4}
+                        maxLength={6}
                     />
                     <TouchableOpacity
                         style={[styles.button, isLoading && styles.buttonDisabled]}

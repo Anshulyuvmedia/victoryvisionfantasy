@@ -1,95 +1,89 @@
-import { Stack } from 'expo-router';
-import { useState, useEffect } from 'react';
+// app/_layout.jsx
+import { Stack, useRouter } from 'expo-router';
+import { useState, useEffect, useContext } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts } from 'expo-font';
-import { SafeAreaView, View, StyleSheet, Platform } from 'react-native';
+import { SafeAreaView, View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
+import GlobalProviderReport, { GlobalContextReport } from './GlobalContextReport';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function AppLayout() {
-    const [loaded, error] = useFonts({
-        SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    });
+  const [fontsLoaded, fontsError] = useFonts({
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+  });
 
-    useEffect(() => {
-        if (error) throw error;
-    }, [error]);
+  useEffect(() => {
+    if (fontsError) throw fontsError;
+  }, [fontsError]);
 
-    useEffect(() => {
-        if (loaded) {
-            SplashScreen.hideAsync();
-        }
-    }, [loaded]);
+  useEffect(() => {
+    if (fontsLoaded) SplashScreen.hideAsync();
+  }, [fontsLoaded]);
 
-    if (!loaded) {
-        return null;
-    }
+  if (!fontsLoaded) return null;
 
-    return <RootLayoutNav />;
+  return (
+    <GlobalProviderReport>
+      <RootLayoutNav />
+    </GlobalProviderReport>
+  );
 }
 
 function RootLayoutNav() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const insets = useSafeAreaInsets();
+  const { loading } = useContext(GlobalContextReport);
+  const [checkingAuth, setCheckingAuth] = useState(false);
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
 
-    useEffect(() => {
-        const checkAuthState = async () => {
-            try {
-                const token = await AsyncStorage.getItem('userToken');
-                setIsAuthenticated(!!token);
-            } catch (error) {
-                console.error('Error checking auth state:', error);
-            }
-        };
-        checkAuthState();
-    }, []);
+  // Auth check
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        console.log(token);
 
-    useEffect(() => {
-        const saveAuthState = async () => {
-            try {
-                if (isAuthenticated) {
-                    await AsyncStorage.setItem('userToken', 'loggedIn');
-                } else {
-                    await AsyncStorage.removeItem('userToken');
-                }
-            } catch (error) {
-                console.error('Error saving auth state:', error);
-            }
-        };
-        saveAuthState();
-    }, [isAuthenticated]);
+        if (token) router.replace('/');
+        else router.replace('/(auth)/login');
+      } catch (err) {
+        console.error('Auth check failed', err);
+        router.replace('(auth)');
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
 
+    checkAuth();
+  }, []);
+  console.log("Auth state →", { loading, checkingAuth });
+
+  if (loading || checkingAuth) {
+    // console.log('loading', loading, 'checkingAuth', checkingAuth);
     return (
-        <SafeAreaView style={{ flex: 1, paddingTop: insets.top }}>
-            <View
-                style={[
-                    styles.statusBar,
-                    { height: insets.top || 44, backgroundColor: '#111F54' },
-                ]}
-            >
-                <StatusBar style="light" />
-            </View>
-            <Stack screenOptions={{ headerShown: false }}>
-                {isAuthenticated ? (
-                    <Stack.Screen name="(root)" options={{ headerShown: false }} />
-                ) : (
-                    <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                )}
-            </Stack>
-        </SafeAreaView>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#ffffffff" />
+        <StatusBar style="light" />
+      </View>
     );
+  }
+
+  return (
+    <SafeAreaView style={{ flex: 1, paddingTop: insets.top }}>
+      <View style={[styles.statusBar, { height: insets.top || 44, backgroundColor: '#111F54' }]} />
+      <Stack screenOptions={{ headerShown: false }} />
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-    statusBar: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#111F54',
-    },
+  statusBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#111F54',
+  },
 });

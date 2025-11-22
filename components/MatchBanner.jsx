@@ -1,11 +1,14 @@
 import { StyleSheet, Text, View, Dimensions, Image, ImageBackground } from 'react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import images from '@/constants/images';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
-
+import axios from 'axios';
 const { width } = Dimensions.get('window');
+import moment from 'moment';
 
-const MatchBanner = () => {
+const MatchBanner = ({ matchBannerData }) => {
+    //console.log('Inside MatchBanner:', matchBannerData);
+    const matchTime = matchBannerData?.matchDate ? moment(matchBannerData.matchDate).local().format("h:mm A") : "";
     return (
         <View style={styles.outerContainer}>
             <ImageBackground
@@ -14,9 +17,9 @@ const MatchBanner = () => {
                 resizeMode="contain"
             >
                 <View style={styles.header}>
-                    <Text style={styles.matchNo}>Match No: 5</Text>
-                    <Text style={styles.time}>Today 7:30 PM</Text>
-                    <Text style={styles.countdown}>29M 30S Left</Text>
+                    <Text style={styles.matchNo}>Match No: {matchBannerData?.match_number || '-'}</Text>
+                    <Text style={styles.time}>{matchTime}</Text>
+                    <Text style={styles.countdown}> {matchBannerData?.formatStr}</Text>
                 </View>
                 <ImageBackground
                     style={styles.gradientOverlay}
@@ -25,20 +28,21 @@ const MatchBanner = () => {
                 >
                     <View style={styles.teams}>
                         <Image
-                            source={images.mi}
+                            source={{ uri: matchBannerData?.teamA?.logo }}
                             style={styles.logo}
                             resizeMode="contain"
                         />
+
                         <Text style={styles.vs}>VS</Text>
                         <Image
-                            source={images.csk}
+                            source={{ uri: matchBannerData?.teamB?.logo }}
                             style={styles.logo}
                             resizeMode="contain"
                         />
                     </View>
                     <View style={styles.details}>
-                        <Text style={styles.location}>Wankhede Stadium, Mumbai</Text>
-                        <Text style={styles.weather}>Clear | 28°C | Batting Pitch</Text>
+                        <Text style={styles.location}>{matchBannerData?.venue}</Text>
+                        <Text style={styles.weather}>{matchBannerData?.title}</Text>
                     </View>
                 </ImageBackground>
             </ImageBackground>
@@ -75,9 +79,9 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: moderateScale(15),
+        paddingHorizontal: moderateScale(20),
         postion: 'abosulte',
-        top: 22,
+        top: 30,
     },
     matchNo: {
         color: '#FFFFFF',
@@ -88,6 +92,7 @@ const styles = StyleSheet.create({
         color: '#FFFFFF',
         fontSize: scale(18),
         fontWeight: '800',
+        paddingEnd: moderateScale(23),
     },
     countdown: {
         color: '#FFFFFF',
@@ -101,7 +106,7 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(10), // Increased vertical space
     },
     logo: {
-        width: scale(80), // Slightly smaller to match the second image
+        width: scale(60), // Slightly smaller to match the second image
         height: verticalScale(70),
         marginHorizontal: moderateScale(20),
     },

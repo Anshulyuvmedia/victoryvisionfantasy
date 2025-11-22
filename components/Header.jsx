@@ -33,9 +33,9 @@ const Header = () => {
                 <TouchableOpacity onPress={() => router.push('/notifications')}>
                     <Ionicons name="notifications-outline" size={moderateScale(20)} color="#fff" style={styles.icon} />
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => router.push('/wallet')}>
+                {/* <TouchableOpacity onPress={() => router.push('/wallet')}>
                     <Ionicons name="wallet-outline" size={moderateScale(20)} color="#fff" style={styles.icon} />
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
         </View>
     );
