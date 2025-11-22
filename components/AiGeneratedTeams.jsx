@@ -33,7 +33,8 @@ const riskyColors = {
     copyBg: '#fee2e2',
 };
 
-const AiGeneratedTeams = () => {
+const AiGeneratedTeams = ({ userAITeams }) => {
+    console.log("date : ", userAITeams);
     const [apiData, setApiData] = useState([]);
     const [players, setPlayers] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -48,7 +49,7 @@ const AiGeneratedTeams = () => {
                 params: { userid }
             });
 
-            // console.log('API Response:', response.data.results);
+            console.log('API Response:', response.data.results);
 
             const results = response.data.results;
             if (!Array.isArray(results) || results.length === 0) {
@@ -124,6 +125,10 @@ const AiGeneratedTeams = () => {
     useEffect(() => {
         fetchGeneratedAiTeams();
     }, []);
+
+    useEffect(() => {
+        fetchGeneratedAiTeams();
+    }, [userAITeams]);
 
 
     const filteredTeams = apiData.filter(team =>

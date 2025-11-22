@@ -1,11 +1,12 @@
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
-import React from 'react'
+import React, { useState } from 'react'
 import Header from '@/components/Header';
 import Aiteamconfig from '@/components/Aiteamconfig';
 import AiGeneratedTeams from '@/components/AiGeneratedTeams';
 import { Feather } from '@expo/vector-icons'; // Ensure this is installed
 
 const AiTeams = () => {
+    const [userAITeams, setuserAITeams] = useState('');
     return (
         <View style={styles.container}>
             <Header />
@@ -15,10 +16,10 @@ const AiTeams = () => {
                 showsVerticalScrollIndicator={false}
             >
                 <View style={styles.section}>
-                    <Aiteamconfig />
+                    <Aiteamconfig setuserAITeams={setuserAITeams} />
                 </View>
                 <View style={styles.section}>
-                    <AiGeneratedTeams />
+                    <AiGeneratedTeams userAITeams={userAITeams} />
                 </View>
             </ScrollView>
             <View style={styles.actionBox}>

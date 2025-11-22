@@ -7,7 +7,7 @@ import axios from 'axios';
 import { GlobalContextReport } from '../app/GlobalContextReport';
 
 
-const Aiteamconfig = () => {
+const Aiteamconfig = ({ setuserAITeams }) => {
     const { todayMatches } = useContext(GlobalContextReport);
     const safeTodayMatches = Array.isArray(todayMatches) ? todayMatches : [];
     // console.log('todaymatchesss', safeTodayMatches);
@@ -53,6 +53,22 @@ const Aiteamconfig = () => {
         formData.append('riskLevel', riskLevel);
         console.log('Form Data:', formData);
 
+        //This is a dummy code for testing do not remove or delete it
+        // try {
+        //     const response = await axios.post(
+        //         "http://192.168.1.27:3000/api/insert-dummy-ai-teams",
+        //         { matchId: 94353 }
+        //     );
+        //     setLoading(false);
+        //     setuserAITeams(Date.now());
+        //     Alert.alert("Success", "Dummy AI Teams saved to MongoDB");
+        //     console.log(response.data);
+
+        // } catch (error) {
+        //     setLoading(false);
+        //     console.log(error);
+        //     Alert.alert("Error", "Failed to save dummy teams");
+        // }
         try {
             const response = await axios.post(
                 'https://api.victoryvision.live/api/insert-aiteam',
@@ -63,12 +79,29 @@ const Aiteamconfig = () => {
                     },
                 }
             );
+
+            // ❗ Check for missing or empty AI data
+            if (
+                !response.data ||
+                !response.data.data ||
+                response.data.data.length === 0
+            ) {
+                setLoading(false);
+                Alert.alert('Error', 'AI did not generate any team. Please try again.');
+                return; // stop here
+            }
+
+            // If valid → success
             setLoading(false);
+            setuserAITeams(Date.now());
             Alert.alert('Success', 'AI Teams generated successfully!');
+
         } catch (error) {
+            setLoading(false);
             Alert.alert('Error', 'Failed to generate AI teams. Please try again.');
             console.error('Upload failed:', error);
         }
+
     };
     return (
         <View style={styles.container}>
